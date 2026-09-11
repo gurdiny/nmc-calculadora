@@ -264,7 +264,34 @@ class NCM_Data {
 		$normalizada = self::normalizar( $config );
 		self::$cache = $normalizada;
 
-		return update_option( self::OPTION, $normalizada );
+		/*
+		 * Sin autoload: la config ronda los 6 KB y solo hace falta en el panel y
+		 * en las páginas que llevan un shortcode de la calculadora. Cargarla en
+		 * cada petición del sitio —incluidas las que no la usan— sale más caro
+		 * que la consulta extra que cuesta leerla cuando toca.
+		 */
+		$guardada = update_option( self::OPTION, $normalizada, false );
+
+		self::asegurar_sin_autoload();
+
+		return $guardada;
+	}
+
+	/**
+	 * Fuerza `autoload = off` en la opción.
+	 *
+	 * `update_option()` sale antes de tiempo cuando el valor no cambia, así que
+	 * el parámetro `$autoload` no basta: en una instalación que ya venía de una
+	 * versión anterior la opción seguiría autocargándose hasta que alguien
+	 * editara algo. Esto lo corrige en cuanto se guarda o se activa el plugin.
+	 *
+	 * `wp_set_option_autoload()` existe desde WordPress 6.4; en versiones
+	 * anteriores la opción se queda como esté, que es el comportamiento previo.
+	 */
+	public static function asegurar_sin_autoload() {
+		if ( function_exists( 'wp_set_option_autoload' ) ) {
+			wp_set_option_autoload( self::OPTION, false );
+		}
 	}
 
 	/** Restablece la config a los valores del Excel. */

@@ -51,7 +51,13 @@ function ncm_calc_activar() {
 
 	if ( ! is_array( $actual ) || empty( $actual ) ) {
 		NCM_Data::restaurar_semilla();
+
+		return;
 	}
+
+	// Instalación que viene de una versión anterior: la opción podría seguir
+	// autocargándose en cada petición. Se corrige sin tocar su contenido.
+	NCM_Data::asegurar_sin_autoload();
 }
 register_activation_hook( __FILE__, 'ncm_calc_activar' );
 

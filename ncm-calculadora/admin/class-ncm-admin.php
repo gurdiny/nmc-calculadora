@@ -110,7 +110,7 @@ class NCM_Admin {
 	/** Pinta la pantalla completa. */
 	public static function render() {
 		if ( ! current_user_can( self::CAP ) ) {
-			wp_die( esc_html__( 'No tienes permisos para ver esta página.' ) );
+			wp_die( esc_html__( 'No tienes permisos para ver esta página.', 'ncm-calculadora' ) );
 		}
 
 		$tab    = self::pestana_actual();
@@ -480,7 +480,7 @@ class NCM_Admin {
 	/** Procesa el guardado de una pestaña. */
 	public static function guardar() {
 		if ( ! current_user_can( self::CAP ) ) {
-			wp_die( esc_html__( 'No tienes permisos para hacer esto.' ) );
+			wp_die( esc_html__( 'No tienes permisos para hacer esto.', 'ncm-calculadora' ) );
 		}
 
 		$tab      = isset( $_POST['tab'] ) ? sanitize_key( wp_unslash( $_POST['tab'] ) ) : 'parametros';
@@ -523,7 +523,7 @@ class NCM_Admin {
 	/** Restaura los valores del Excel. */
 	public static function restaurar() {
 		if ( ! current_user_can( self::CAP ) ) {
-			wp_die( esc_html__( 'No tienes permisos para hacer esto.' ) );
+			wp_die( esc_html__( 'No tienes permisos para hacer esto.', 'ncm-calculadora' ) );
 		}
 
 		check_admin_referer( 'ncm_restaurar_semilla', 'ncm_nonce' );

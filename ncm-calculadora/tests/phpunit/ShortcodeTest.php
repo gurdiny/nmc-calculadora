@@ -151,9 +151,39 @@ class ShortcodeTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'uso interno', $html );
 	}
 
-	/** La interna sí se pinta con sesión. */
+	/** Un suscriptor tiene sesión, pero no ve el formulario interno. */
+	public function test_la_interna_se_bloquea_para_un_suscriptor() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
+
+		$html = do_shortcode( '[ncm_calculadora_interna]' );
+
+		$this->assertSame( 0, substr_count( $html, 'data-paso="' ) );
+		$this->assertStringContainsString( 'uso interno', $html );
+	}
+
+	/** La pública sí funciona para un suscriptor, como para cualquiera. */
+	public function test_la_publica_funciona_para_un_suscriptor() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
+
+		$html = do_shortcode( '[ncm_calculadora]' );
+
+		$this->assertSame( 6, substr_count( $html, 'data-paso="' ) );
+	}
+
+	/** La capacidad interna es la del equipo, no la de cualquier registrado. */
+	public function test_la_capacidad_interna_no_es_read() {
+		$this->assertSame( 'edit_posts', NCM_Shortcode::CAP );
+
+		$suscriptor = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		$autor      = self::factory()->user->create( array( 'role' => 'author' ) );
+
+		$this->assertFalse( user_can( $suscriptor, NCM_Shortcode::CAP ) );
+		$this->assertTrue( user_can( $autor, NCM_Shortcode::CAP ) );
+	}
+
+	/** La interna sí se pinta con sesión del equipo. */
 	public function test_la_interna_se_pinta_con_sesion() {
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'author' ) ) );
 
 		$html = do_shortcode( '[ncm_calculadora_interna]' );
 

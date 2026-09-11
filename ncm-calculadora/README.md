@@ -483,30 +483,30 @@ La calculadora pública y la interna comparten un solo endpoint AJAX
 - `tests/test-respuesta.php` recorre la carga entera —JSON y HTML— buscando esas
   cifras en las 30 combinaciones de la matriz.
 
-### Supuesto: quién puede ver costos y margen
+### Quién puede ver costos y margen
 
 La vista interna (`[ncm_calculadora_interna]`) muestra el **costo de producción y
-el margen comercial** a cualquier usuario con sesión y capacidad `read` — es
-decir, **a cualquier usuario registrado**, incluido un suscriptor.
+el margen comercial**, así que está detrás de la capacidad **`edit_posts`**:
+autores, editores y administradores. Un **suscriptor no la ve** — ni el
+formulario, ni el desglose por AJAX: recibe exactamente lo mismo que un anónimo,
+solo el precio.
 
-**Eso es seguro solo mientras el registro del sitio esté cerrado**, con los
-usuarios creados a mano por un administrador (que es la situación actual:
-*Ajustes → Generales → Cualquiera puede registrarse* desactivado).
+Se eligió `edit_posts` y no `read` a propósito. Con `read` bastaría con estar
+registrado, y eso deja de ser seguro en cuanto el sitio abre el registro por su
+cuenta: al instalar WooCommerce, un plugin de membresías o al marcar *Cualquiera
+puede registrarse*, cualquier visitante podría darse de alta y leer la estructura
+de costos de NCM **sin que nadie toque este plugin**. Con `edit_posts` el riesgo
+deja de depender de una configuración externa que puede cambiar sin aviso.
 
-> ⚠️ **Si algún día se abre el registro público** —una tienda, un área de
-> clientes, un formulario de alta— cualquiera podría registrarse y ver la
-> estructura de costos de NCM. Antes de abrirlo hay que **subir la capacidad**
-> en la constante `NCM_Shortcode::CAP` (`public/class-ncm-shortcode.php`), de
-> `read` a algo que solo tenga el equipo: `edit_posts` (autores y superiores),
-> `edit_others_posts` (editores) o `manage_options` (administradores).
-
-Es un cambio de una línea, pero hay que acordarse de hacerlo: el plugin no puede
-detectar solo que cambió la política de registro del sitio.
+Si en tu instalación quien cotiza tiene otro rol, cambia la constante
+`NCM_Shortcode::CAP` en `public/class-ncm-shortcode.php`: `edit_others_posts`
+(solo editores) o `manage_options` (solo administradores) la restringen más.
+**No la bajes a `read`.**
 
 Además:
 
-- El shortcode interno exige `is_user_logged_in()` y la capacidad `read`; a un
-  anónimo no le pinta ni el formulario.
+- El shortcode interno exige `is_user_logged_in()` y la capacidad `edit_posts`;
+  a un anónimo —o a un suscriptor— no le pinta ni el formulario.
 - **Nonce en las dos rutas**, con y sin sesión.
 - El panel exige `manage_options`, con nonce en el guardado y en la restauración.
 - Toda entrada pasa por `sanitize_*` y toda salida por `esc_*`.
@@ -529,8 +529,8 @@ Además:
 - **Precios sin separador de miles:** `650000`, no `650.000`.
 - **Al publicar en un sitio nuevo:** excluir la página pública del caché (ver
   [Importante: caché](#importante-caché)).
-- **Si se abre el registro público del sitio:** subir `NCM_Shortcode::CAP` antes,
-  o los costos quedan a la vista de cualquiera que se registre.
+- **No bajar `NCM_Shortcode::CAP` a `read`:** dejaría los costos a la vista de
+  cualquiera que se registre en el sitio.
 - Los nombres de gemas, tallas, metales, tipos y diseños son **llaves de
   búsqueda**: se comparan literalmente, con tildes y paréntesis incluidos
   (`Rubí`, `Bangle (Rígida)`). Cambiar un nombre en el panel equivale a crear

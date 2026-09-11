@@ -118,23 +118,20 @@ la semilla.
 
 ---
 
-## 7. La vista interna muestra costos a cualquier usuario registrado
+## 7. La vista interna mostraba costos a cualquier usuario registrado
 
-**Estado:** documentado como supuesto; revisar si cambia la política de registro.
+**Estado: CERRADO** en la v1.2.1.
 
-`[ncm_calculadora_interna]` exige sesión y la capacidad `read`, que tiene
-**cualquier usuario registrado**, incluido un suscriptor. Hoy eso es seguro
-porque el registro del sitio está cerrado y los usuarios los crea un
-administrador.
+`NCM_Shortcode::CAP` pasó de `read` a **`edit_posts`**. Un suscriptor ya no ve el
+formulario interno y, si llama al AJAX, recibe la respuesta **pública**: solo el
+precio, sin costo de producción ni margen.
 
-**El día que se abra el registro público** —una tienda, un área de clientes, un
-formulario de alta— cualquiera podría registrarse y ver el costo de producción y
-el margen de NCM.
+Se subió como defensa en profundidad, sin esperar a que el registro se abriera:
+el riesgo dependía de una configuración del sitio (WooCommerce, membresías,
+«cualquiera puede registrarse») que puede cambiar sin que nadie toque el plugin.
 
-**Para cerrarlo entonces:** subir `NCM_Shortcode::CAP` de `read` a `edit_posts`,
-`edit_others_posts` o `manage_options`, según quién deba cotizar. Es un cambio de
-una línea en `public/class-ncm-shortcode.php`, pero el plugin no puede detectar
-solo que cambió la política de registro: hay que acordarse.
+Cubierto por pruebas: un suscriptor recibe la carga pública y ninguna cifra
+sensible; autor, colaborador, editor y administrador reciben el desglose.
 
-Queda escrito en el README, en *Seguridad → Supuesto: quién puede ver costos y
-margen*.
+**Si alguna vez hace falta restringir más:** `edit_others_posts` (solo editores) o
+`manage_options` (solo administradores). No bajarla a `read`.

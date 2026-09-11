@@ -25,8 +25,16 @@ class NCM_Shortcode {
 	/** Acción AJAX. */
 	const ACCION = 'ncm_calcular';
 
-	/** Capacidad mínima para ver el desglose interno. */
-	const CAP = 'read';
+	/**
+	 * Capacidad mínima para ver el desglose interno.
+	 *
+	 * `edit_posts` (autores y superiores), no `read`: con `read` bastaría estar
+	 * registrado —un suscriptor— para ver el costo de producción y el margen, y
+	 * eso quedaría expuesto en cuanto el sitio abra el registro por su cuenta
+	 * (WooCommerce, un plugin de membresías, «cualquiera puede registrarse»).
+	 * Quien cotiza en NCM tiene cuenta de autor o superior de todas formas.
+	 */
+	const CAP = 'edit_posts';
 
 	/** Modo público: solo el precio. */
 	const MODO_PUBLICO = 'publico';
@@ -165,7 +173,7 @@ class NCM_Shortcode {
 	 */
 	public static function render_interna( $atts = array() ) {
 		if ( ! is_user_logged_in() || ! current_user_can( self::CAP ) ) {
-			return '<div class="ncm-calc ncm-calc--bloqueada"><p>Esta versión de la calculadora es de uso interno. Inicia sesión para usarla.</p></div>';
+			return '<div class="ncm-calc ncm-calc--bloqueada"><p>Esta versión de la calculadora es de uso interno. Inicia sesión con una cuenta del equipo para usarla.</p></div>';
 		}
 
 		return self::render( self::MODO_INTERNO );

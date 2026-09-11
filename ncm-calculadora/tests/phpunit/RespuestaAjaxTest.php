@@ -107,7 +107,7 @@ class RespuestaAjaxTest extends WP_Ajax_UnitTestCase {
 		$this->assertStringContainsString( '19.290.000', $datos['html'] );
 	}
 
-	/** (b) Con sesión: llega el desglose completo. */
+	/** (b) Con sesión del equipo: llega el desglose completo. */
 	public function test_con_sesion_recibe_el_desglose_completo() {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
 
@@ -132,6 +132,69 @@ class RespuestaAjaxTest extends WP_Ajax_UnitTestCase {
 		$this->assertCount( 25, $datos['desglose'] );
 		$this->assertStringContainsString( 'Desglose detallado', $datos['html'] );
 		$this->assertStringContainsString( 'ncm-calc__imprimir', $datos['html'] );
+	}
+
+	/**
+	 * Un suscriptor tiene sesión, pero no `edit_posts`: recibe lo mismo que un
+	 * anónimo. Es la defensa contra que el sitio abra el registro sin avisar.
+	 */
+	public function test_un_suscriptor_recibe_la_respuesta_publica() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
+
+		$respuesta = $this->pedir_caso_b();
+		$crudo     = $this->_last_response;
+
+		$this->assertTrue( $respuesta['success'], 'El suscriptor sí puede consultar el precio.' );
+
+		$datos = $respuesta['data'];
+
+		$this->assertSame( 'publico', $datos['modo'] );
+		$this->assertEqualsWithDelta( 19290000.0, $datos['precio_final'], 0.000001 );
+
+		foreach ( self::CLAVES_INTERNAS as $clave ) {
+			$this->assertArrayNotHasKey( $clave, $datos, "Un suscriptor no debe recibir «{$clave}»." );
+		}
+
+		foreach ( self::PROHIBIDOS as $cifra ) {
+			$this->assertStringNotContainsString( $cifra, $crudo, "Se filtró «{$cifra}» a un suscriptor." );
+		}
+	}
+
+	/**
+	 * Un autor sí tiene `edit_posts`, así que recibe el desglose.
+	 *
+	 * @dataProvider roles_internos
+	 *
+	 * @param string $rol Rol de WordPress.
+	 */
+	public function test_los_roles_del_equipo_reciben_el_desglose( $rol ) {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => $rol ) ) );
+
+		$datos = $this->pedir_caso_b()['data'];
+
+		$this->assertSame( 'interno', $datos['modo'], "El rol {$rol} debería ver el desglose." );
+		$this->assertEqualsWithDelta( 14288000.0, $datos['costo_produccion'], 0.000001 );
+		$this->assertEqualsWithDelta( 0.35, $datos['margen_comercial'], 0.000001 );
+	}
+
+	/**
+	 * Roles que tienen `edit_posts`.
+	 *
+	 * @return array
+	 */
+	public function roles_internos() {
+		return array(
+			'autor'         => array( 'author' ),
+			'editor'        => array( 'editor' ),
+			'administrador' => array( 'administrator' ),
+		);
+	}
+
+	/** Un colaborador también tiene edit_posts: entra. */
+	public function test_un_colaborador_entra() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'contributor' ) ) );
+
+		$this->assertSame( 'interno', $this->pedir_caso_b()['data']['modo'] );
 	}
 
 	/** Un nonce inválido corta la petición, con o sin sesión. */

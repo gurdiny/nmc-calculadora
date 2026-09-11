@@ -227,7 +227,38 @@ curl -s -c "${COOKIES_ED}" -b "${COOKIES_ED}" -o /dev/null -L \
 comprobar "un editor no entra al panel" "403" \
 	"$(curl -s -o /dev/null -w '%{http_code}' -b "${COOKIES_ED}" \
 		"${BASE}/wp-admin/admin.php?page=ncm-calculadora")"
-comprobar "pero sí puede usar la calculadora" "true" \
+comprobar "pero sí ve el desglose interno (tiene edit_posts)" "interno" \
+	"$(curl -s -b "${COOKIES_ED}" "${BASE}/interna/" -L | grep -o '"nonce":"[a-z0-9]*"' | head -1 \
+		| cut -d'"' -f4 | xargs -I{} curl -s -b "${COOKIES_ED}" -X POST "${AJAX}" \
+			-d "action=ncm_calcular" -d "nonce={}" -d "tipo=Anillo" -d "diseno=Solitario" \
+			-d "origen=Natural" -d "gema=Diamante" -d "talla=Redonda" --data-urlencode "metal=Oro blanco" \
+		| python3 -c 'import json,sys;print(json.loads(sys.stdin.read())["data"]["modo"])')"
+
+# Un suscriptor tiene sesión pero no edit_posts: debe recibir la respuesta pública.
+wpcli user create suscriptor sub@example.test --role=subscriber --user_pass=sub >/dev/null
+COOKIES_SUB=$(mktemp)
+curl -s -c "${COOKIES_SUB}" -b "${COOKIES_SUB}" -o /dev/null "${BASE}/wp-login.php"
+curl -s -c "${COOKIES_SUB}" -b "${COOKIES_SUB}" -o /dev/null -L \
+	-d "log=suscriptor&pwd=sub&wp-submit=Entrar&redirect_to=${BASE}/&testcookie=1" \
+	"${BASE}/wp-login.php"
+
+SUB_NONCE=$(curl -sL -b "${COOKIES_SUB}" "${BASE}/cotizador/" | grep -o '"nonce":"[a-z0-9]*"' | head -1 | cut -d'"' -f4)
+SUB_RESP=$(curl -s -b "${COOKIES_SUB}" -X POST "${AJAX}" -d "action=ncm_calcular" -d "nonce=${SUB_NONCE}" \
+	-d "tipo=Anillo" -d "diseno=Solitario" -d "origen=Natural" -d "gema=Diamante" \
+	-d "talla=Redonda" --data-urlencode "metal=Oro blanco")
+
+comprobar "un suscriptor recibe la respuesta pública" "publico" \
+	"$(python3 -c 'import json,sys;print(json.loads(sys.stdin.read())["data"]["modo"])' <<<"${SUB_RESP}")"
+comprobar "y ninguna cifra sensible" "" \
+	"$(python3 -c '
+import sys
+crudo = sys.stdin.read()
+print(",".join(c for c in ("12.000.000","2.288.000","14.288.000","5.000.800","650.000") if c in crudo))' <<<"${SUB_RESP}")"
+comprobar "ni el formulario interno" "0" \
+	"$(curl -sL -b "${COOKIES_SUB}" "${BASE}/interna/" | grep -o 'ncm-opcion__radio' | wc -l | tr -d ' ')"
+rm -f "${COOKIES_SUB}"
+
+comprobar "el editor sigue pudiendo calcular" "true" \
 	"$(curl -s -b "${COOKIES_ED}" "${BASE}/?page_id=${PAGINA}" | grep -o '"nonce":"[a-z0-9]*"' | head -1 \
 		| cut -d'"' -f4 | xargs -I{} curl -s -b "${COOKIES_ED}" -X POST "${AJAX}" \
 			-d "action=ncm_calcular" -d "nonce={}" -d "tipo=Anillo" -d "diseno=Solitario" \

@@ -41,6 +41,9 @@ partir de `is_user_logged_in()`, y esa es la única fuente de verdad.
 - Eso incluye el **HTML**: el bloque que se devuelve a un anónimo no puede
   contener ninguna de esas cifras. Un dato escondido con CSS sigue siendo un dato
   filtrado.
+- El **mensaje de WhatsApp** se arma en el servidor y entra en la misma regla:
+  solo la selección del visitante y el precio final. Por eso no hay marcador de
+  plantilla para el costo ni el margen, y no debe añadirse uno.
 - Si agregas un campo al resultado del motor, **no** llega solo al público:
   hay que sumarlo a mano a la rama interna de `respuesta()`. La lista pública es
   una *allowlist*, y así debe seguir.

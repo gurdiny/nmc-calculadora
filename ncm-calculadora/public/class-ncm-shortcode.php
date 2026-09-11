@@ -117,8 +117,99 @@ class NCM_Shortcode {
 		self::$encolado = true;
 
 		wp_enqueue_style( 'ncm-calculadora' );
+		wp_add_inline_style( 'ncm-calculadora', self::css_paleta() );
 		wp_enqueue_script( 'ncm-calculadora' );
 		wp_localize_script( 'ncm-calculadora', 'ncmCalcData', self::datos_js() );
+	}
+
+	/**
+	 * Colores del formulario, como variables CSS.
+	 *
+	 * La paleta `ncm` se engancha a las variables globales de Elementor con un
+	 * respaldo propio: si el tema cambia sus colores, la calculadora los sigue
+	 * sola; si no hay Elementor, usa los valores de NCM.
+	 *
+	 * @return string CSS listo para inyectar.
+	 */
+	public static function css_paleta() {
+		$p       = NCM_Data::get_parametros();
+		$paletas = array(
+			'ncm'    => array(
+				'tinta'        => 'var( --e-global-color-secondary, #1D1E1B )',
+				'suave'        => 'var( --e-global-color-7240aa4, #5D6152 )',
+				'tenue'        => 'var( --e-global-color-9fc7779, #6A6B5A )',
+				'linea'        => 'var( --e-global-color-text, #E5DECC )',
+				'linea_fuerte' => 'var( --e-global-color-accent, #C6B49A )',
+				'fondo'        => '#FFFFFF',
+				'fondo_alt'    => 'var( --e-global-color-d96b7c8, #F2EEE3 )',
+				'acento'       => 'var( --e-global-color-primary, #354C3F )',
+				'acento_claro' => 'var( --e-global-color-text, #E5DECC )',
+				'acento_texto' => '#FFFFFF',
+				'velo'         => 'rgba( 255, 255, 255, 0.92 )',
+			),
+			'claro'  => array(
+				'tinta'        => '#1F1D1A',
+				'suave'        => '#6F6A63',
+				'tenue'        => '#A29B92',
+				'linea'        => '#E4DED5',
+				'linea_fuerte' => '#CFC6B8',
+				'fondo'        => '#FFFFFF',
+				'fondo_alt'    => '#FAF8F5',
+				'acento'       => '#8A6D3B',
+				'acento_claro' => '#F3ECE1',
+				'acento_texto' => '#FFFFFF',
+				'velo'         => 'rgba( 255, 255, 255, 0.92 )',
+			),
+			'oscuro' => array(
+				'tinta'        => '#E5DECC',
+				'suave'        => '#C6B49A',
+				'tenue'        => '#8E8F7E',
+				'linea'        => '#3A3B36',
+				'linea_fuerte' => '#5D6152',
+				'fondo'        => '#1D1E1B',
+				'fondo_alt'    => '#33352F',
+				'acento'       => '#C6B49A',
+				'acento_claro' => '#33352F',
+				'acento_texto' => '#1D1E1B',
+				'velo'         => 'rgba( 29, 30, 27, 0.92 )',
+			),
+		);
+
+		if ( 'personalizada' === $p['paleta'] ) {
+			$colores = array(
+				'tinta'        => $p['color_tinta'],
+				'suave'        => $p['color_tinta'],
+				'tenue'        => $p['color_tinta'],
+				'linea'        => $p['color_linea'],
+				'linea_fuerte' => $p['color_linea'],
+				'fondo'        => $p['color_fondo'],
+				'fondo_alt'    => $p['color_fondo_alt'],
+				'acento'       => $p['color_acento'],
+				'acento_claro' => $p['color_fondo_alt'],
+				'acento_texto' => $p['color_acento_texto'],
+				'velo'         => $p['color_fondo'],
+			);
+		} else {
+			$clave   = isset( $paletas[ $p['paleta'] ] ) ? $p['paleta'] : 'ncm';
+			$colores = $paletas[ $clave ];
+		}
+
+		return sprintf(
+			'.ncm-calc{--ncm-tinta:%1$s;--ncm-suave:%2$s;--ncm-tenue:%3$s;--ncm-linea:%4$s;' .
+			'--ncm-linea-fuerte:%5$s;--ncm-fondo:%6$s;--ncm-fondo-alt:%7$s;--ncm-acento:%8$s;' .
+			'--ncm-acento-claro:%9$s;--ncm-sobre-acento:%10$s;--ncm-velo:%11$s;}',
+			$colores['tinta'],
+			$colores['suave'],
+			$colores['tenue'],
+			$colores['linea'],
+			$colores['linea_fuerte'],
+			$colores['fondo'],
+			$colores['fondo_alt'],
+			$colores['acento'],
+			$colores['acento_claro'],
+			$colores['acento_texto'],
+			$colores['velo']
+		);
 	}
 
 	/**
@@ -588,6 +679,8 @@ class NCM_Shortcode {
 			'precio_final_formateado' => $r['precio_final_formateado'],
 			'moneda'                  => $r['moneda'],
 			'texto_nota'              => $r['texto_nota'],
+			// Solo lleva la selección del visitante y el precio: ver whatsapp().
+			'whatsapp'                => self::whatsapp( $r ),
 		);
 
 		if ( ! $interno ) {
@@ -640,6 +733,75 @@ class NCM_Shortcode {
 	}
 
 	/* ---------------------------------------------------------------------
+	 * WhatsApp
+	 * ------------------------------------------------------------------ */
+
+	/**
+	 * Enlace de WhatsApp con la cotización.
+	 *
+	 * El mensaje lo arma el servidor y **solo** lleva la selección del visitante
+	 * y el precio final: ni componentes, ni costos, ni margen, ni el código de
+	 * diseño. Por eso el mismo enlace vale para la versión pública y para la
+	 * interna, y por eso puede ir en la respuesta de las dos.
+	 *
+	 * @param array $r Resultado del motor.
+	 * @return array|null Null si no hay número configurado o está desactivado.
+	 */
+	public static function whatsapp( array $r ) {
+		$p = NCM_Data::get_parametros();
+
+		if ( empty( $p['whatsapp_activo'] ) || '' === $p['whatsapp_numero'] ) {
+			return null;
+		}
+
+		$plantilla = '' !== trim( $p['whatsapp_mensaje'] )
+			? $p['whatsapp_mensaje']
+			: "Hola, quiero cotizar esta pieza:\n\n{tipo} · {diseno}\nGema: {gema} ({origen})\nTalla: {talla}\nMetal: {metal}\n\nPrecio estimado: {precio}";
+
+		$mensaje = strtr(
+			$plantilla,
+			array(
+				'{tipo}'   => $r['entrada']['tipo'],
+				'{diseno}' => $r['entrada']['diseno'],
+				'{origen}' => $r['entrada']['origen'],
+				'{gema}'   => $r['entrada']['gema'],
+				'{talla}'  => $r['entrada']['talla'],
+				'{metal}'  => $r['entrada']['metal'],
+				'{precio}' => $r['precio_final_formateado'],
+			)
+		);
+
+		return array(
+			'numero'  => $p['whatsapp_numero'],
+			'mensaje' => $mensaje,
+			'url'     => 'https://wa.me/' . $p['whatsapp_numero'] . '?text=' . rawurlencode( $mensaje ),
+		);
+	}
+
+	/**
+	 * Botón de WhatsApp, si hay número configurado.
+	 *
+	 * @param array $r Resultado del motor.
+	 */
+	private static function boton_whatsapp( $r ) {
+		$whatsapp = self::whatsapp( $r );
+
+		if ( null === $whatsapp ) {
+			return;
+		}
+		?>
+		<a class="ncm-calc__boton ncm-calc__whatsapp" href="<?php echo esc_url( $whatsapp['url'] ); ?>"
+			target="_blank" rel="noopener noreferrer nofollow">
+			<svg class="ncm-calc__whatsapp-icono" viewBox="0 0 24 24" width="18" height="18"
+				fill="currentColor" aria-hidden="true" focusable="false">
+				<path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.08-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.65-2.05-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.6-.92-2.2-.24-.58-.48-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.7.63.71.22 1.36.2 1.87.12.57-.09 1.75-.72 2-1.41.25-.7.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35zM12.04 21.5h-.01a9.42 9.42 0 0 1-4.8-1.32l-.34-.2-3.57.94.95-3.48-.22-.36a9.4 9.4 0 0 1-1.44-5.02c0-5.2 4.23-9.43 9.44-9.43a9.37 9.37 0 0 1 6.67 2.77 9.35 9.35 0 0 1 2.76 6.67c0 5.2-4.24 9.43-9.44 9.43zM20.5 3.49A11.28 11.28 0 0 0 12.04 0C5.79 0 .7 5.08.7 11.33c0 2 .52 3.95 1.52 5.67L.6 24l7.16-1.88a11.3 11.3 0 0 0 5.41 1.38h.01c6.25 0 11.34-5.09 11.34-11.34 0-3.03-1.18-5.87-3.32-8.01z"/>
+			</svg>
+			Cotizar por WhatsApp
+		</a>
+		<?php
+	}
+
+	/* ---------------------------------------------------------------------
 	 * Salida
 	 * ------------------------------------------------------------------ */
 
@@ -678,6 +840,10 @@ class NCM_Shortcode {
 			<?php if ( '' !== $r['texto_nota'] ) : ?>
 				<p class="ncm-res__nota"><?php echo esc_html( $r['texto_nota'] ); ?></p>
 			<?php endif; ?>
+
+			<p class="ncm-res__acciones ncm-no-print">
+				<?php self::boton_whatsapp( $r ); ?>
+			</p>
 		</div>
 		<?php
 
@@ -754,6 +920,7 @@ class NCM_Shortcode {
 			<?php endif; ?>
 
 			<p class="ncm-res__acciones ncm-no-print">
+				<?php self::boton_whatsapp( $r ); ?>
 				<button type="button" class="ncm-calc__boton ncm-calc__boton--sec ncm-calc__imprimir">Imprimir / Guardar PDF</button>
 			</p>
 		</div>

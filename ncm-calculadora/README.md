@@ -195,11 +195,12 @@ Cinco pestañas:
 
 | Pestaña        | Qué contiene                                                          |
 | -------------- | --------------------------------------------------------------------- |
-| **Parámetros** | Margen comercial, factor de merma, redondeo, moneda, texto de la calculadora pública y nota al pie. |
+| **Parámetros** | Margen comercial, factor de merma, redondeo, moneda, WhatsApp, texto de la calculadora pública y nota al pie. |
 | **Diseños**    | Matriz de diseños: código, tipo, diseño, peso, gemas, mano de obra, extras. |
 | **Gemas**      | Precio por 1 ct, natural y de laboratorio.                            |
 | **Tallas**     | Ajuste en COP y disponibilidad.                                       |
 | **Metales**    | Precio por gramo, factor adicional y disponibilidad.                  |
+| **Apariencia** | La paleta de colores del formulario.                                  |
 
 Las tablas admiten **agregar, eliminar y reordenar** filas (botones ↑ / ↓). El
 orden de las filas es el orden en que salen las opciones en el formulario
@@ -219,6 +220,39 @@ la mediateca.
   (`object-fit: cover`). Lo ideal son imágenes cuadradas de ~600 px.
 - Los **tipos de joya** no tienen columna propia: cada tipo usa la imagen del
   primer diseño de ese tipo que tenga una (ver `PENDIENTES.md`, punto 6).
+
+### Botón de WhatsApp
+
+En *Parámetros* hay un campo **WhatsApp de NCM**. Con un número ahí, el resultado
+muestra un botón **Cotizar por WhatsApp** que abre el chat con el mensaje ya
+escrito.
+
+- El número va con **indicativo de país y sin el `+`**: para Colombia,
+  `573001234567`. Los espacios, guiones y paréntesis se limpian solos; si lo que
+  queda no tiene entre 7 y 15 dígitos, el panel avisa y el botón no se muestra.
+- **Déjalo vacío (o desmarca la casilla) para ocultar el botón.**
+- El mensaje es una plantilla editable con estos marcadores: `{tipo}`,
+  `{diseno}`, `{origen}`, `{gema}`, `{talla}`, `{metal}` y `{precio}`.
+
+> **No hay marcador para los costos ni el margen, y es a propósito.** El botón
+> sale igual en la calculadora pública, así que el mensaje lo arma el servidor y
+> solo puede llevar la selección del visitante y el precio final. Las pruebas
+> recorren el mensaje y la URL buscando esas cifras.
+
+### Colores
+
+La pestaña **Apariencia** elige la paleta:
+
+| Paleta | Qué hace |
+| --- | --- |
+| **NCM** (por defecto) | Se engancha a las variables globales de Elementor (`--e-global-color-primary`, `--e-global-color-secondary`…) con los colores de NCM como respaldo. Si el tema cambia de colores, la calculadora los sigue sola. |
+| **Claro** | Beige y dorado, la paleta original del plugin. Fija, no depende del tema. |
+| **Oscuro** | Fondo oscuro con dorado. Fija. |
+| **Personalizada** | Seis selectores de color: principal, texto sobre el principal, texto, fondo, fondo secundario y bordes. |
+
+Por dentro son variables CSS (`--ncm-acento`, `--ncm-tinta`…) que se inyectan
+junto a la hoja de estilos. Un valor que no sea un color hexadecimal válido se
+descarta y se usa el de por defecto, así que no se puede inyectar CSS por ahí.
 
 ### Validación al guardar
 
@@ -306,7 +340,7 @@ NCM_Shortcode::respuesta( $resultado, $interno );
 ```
 
 - `$interno = false` → `modo`, `estado`, `entrada`, `precio_final`,
-  `precio_final_formateado`, `moneda`, `texto_nota`, `html`.
+  `precio_final_formateado`, `moneda`, `texto_nota`, `whatsapp`, `html`.
 - `$interno = true` → lo anterior más `codigo`, `gema`, `metal`, `mano_obra`,
   `extras`, `costo_produccion`, `margen_comercial`, `valor_margen`,
   `precio_calculado`, `redondeo_precio`, `desglose` y el `html` con el desglose.
@@ -476,7 +510,8 @@ La calculadora pública y la interna comparten un solo endpoint AJAX
 - Lo que **nunca** sale hacia un anónimo: componentes de gema y metal, mano de
   obra, extras, costo de producción, margen (ni su valor), precio antes de
   redondear, código de diseño, desglose y el motivo técnico de un
-  `REVISAR CONFIGURACIÓN`.
+  `REVISAR CONFIGURACIÓN`. El **mensaje de WhatsApp** entra en la misma regla:
+  solo la selección y el precio.
 - Eso vale también para el **HTML**: el bloque que recibe un anónimo se genera
   aparte (`html_precio()`) y no contiene ninguna de esas cifras. Nada se oculta
   con CSS ni se borra en JavaScript.

@@ -32,6 +32,7 @@ class NCM_Admin {
 			'gemas'      => 'Gemas',
 			'tallas'     => 'Tallas',
 			'metales'    => 'Metales',
+			'apariencia' => 'Apariencia',
 		);
 	}
 
@@ -169,6 +170,9 @@ class NCM_Admin {
 					case 'metales':
 						self::render_metales( $config['metales'] );
 						break;
+					case 'apariencia':
+						self::render_apariencia( $config['parametros'] );
+						break;
 					default:
 						self::render_parametros( $config['parametros'] );
 				}
@@ -262,6 +266,43 @@ class NCM_Admin {
 				</td>
 			</tr>
 			<tr>
+				<th scope="row"><label for="ncm-whatsapp-numero">WhatsApp de NCM</label></th>
+				<td>
+					<input type="text" id="ncm-whatsapp-numero" class="regular-text"
+						name="ncm[parametros][whatsapp_numero]"
+						value="<?php echo esc_attr( $p['whatsapp_numero'] ); ?>"
+						placeholder="573001234567" inputmode="tel">
+					<p class="description">
+						Con <strong>indicativo de país y sin el <code>+</code></strong>: Colombia es
+						<code>57</code>, así que un móvil queda como <code>573001234567</code>. Los espacios,
+						guiones y paréntesis se limpian solos. <strong>Déjalo vacío para ocultar el botón.</strong>
+					</p>
+					<p>
+						<label>
+							<input type="hidden" name="ncm[parametros][whatsapp_activo]" value="0">
+							<input type="checkbox" name="ncm[parametros][whatsapp_activo]" value="1"
+								<?php checked( ! empty( $p['whatsapp_activo'] ) ); ?>>
+							Mostrar el botón «Cotizar por WhatsApp» en el resultado
+						</label>
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><label for="ncm-whatsapp-mensaje">Mensaje de WhatsApp</label></th>
+				<td>
+					<textarea id="ncm-whatsapp-mensaje" rows="8" class="large-text code"
+						name="ncm[parametros][whatsapp_mensaje]"><?php echo esc_textarea( $p['whatsapp_mensaje'] ); ?></textarea>
+					<p class="description">
+						Es el texto que el cliente verá ya escrito al abrir el chat. Puedes usar:
+						<code>{tipo}</code>, <code>{diseno}</code>, <code>{origen}</code>, <code>{gema}</code>,
+						<code>{talla}</code>, <code>{metal}</code> y <code>{precio}</code>.
+						<br>
+						No hay marcador para los costos ni el margen <strong>a propósito</strong>: el mensaje
+						sale igual en la calculadora pública, y ahí esas cifras no pueden aparecer.
+					</p>
+				</td>
+			</tr>
+			<tr>
 				<th scope="row"><label for="ncm-nota">Nota al pie del resultado</label></th>
 				<td>
 					<textarea id="ncm-nota" rows="4" class="large-text"
@@ -269,6 +310,78 @@ class NCM_Admin {
 				</td>
 			</tr>
 		</table>
+		<?php
+	}
+
+	/**
+	 * Pestaña de apariencia: la paleta del formulario.
+	 *
+	 * @param array $p Parámetros actuales.
+	 */
+	private static function render_apariencia( $p ) {
+		$paletas = array(
+			'ncm'           => 'NCM — sigue los colores del tema (Elementor) si existen',
+			'claro'         => 'Claro — beige y dorado, la paleta original del plugin',
+			'oscuro'        => 'Oscuro — fondo oscuro con dorado',
+			'personalizada' => 'Personalizada — eliges tú los colores',
+		);
+
+		$colores = array(
+			'color_acento'       => array( 'Color principal', 'Botones, opción elegida y acentos.' ),
+			'color_acento_texto' => array( 'Texto sobre el color principal', 'Debe contrastar con el anterior.' ),
+			'color_tinta'        => array( 'Color del texto', '' ),
+			'color_fondo'        => array( 'Fondo', '' ),
+			'color_fondo_alt'    => array( 'Fondo secundario', 'Tarjetas, cajas y la opción elegida.' ),
+			'color_linea'        => array( 'Bordes', '' ),
+		);
+		?>
+		<p class="description">
+			Así se ve el formulario en la web. La opción <strong>NCM</strong> se engancha a las variables de
+			color de Elementor (<code>--e-global-color-primary</code> y compañía) con un respaldo propio: si
+			el tema cambia de colores, la calculadora los sigue sola.
+		</p>
+
+		<table class="form-table" role="presentation">
+			<tr>
+				<th scope="row">Paleta</th>
+				<td>
+					<fieldset>
+						<legend class="screen-reader-text">Paleta de colores</legend>
+						<?php foreach ( $paletas as $clave => $etiqueta ) : ?>
+							<p>
+								<label>
+									<input type="radio" name="ncm[parametros][paleta]"
+										value="<?php echo esc_attr( $clave ); ?>"
+										<?php checked( $p['paleta'], $clave ); ?>>
+									<?php echo esc_html( $etiqueta ); ?>
+								</label>
+							</p>
+						<?php endforeach; ?>
+					</fieldset>
+				</td>
+			</tr>
+
+			<?php foreach ( $colores as $clave => $col ) : ?>
+				<tr>
+					<th scope="row"><label for="ncm-<?php echo esc_attr( $clave ); ?>"><?php echo esc_html( $col[0] ); ?></label></th>
+					<td>
+						<input type="color" id="ncm-<?php echo esc_attr( $clave ); ?>"
+							class="ncm-color"
+							name="ncm[parametros][<?php echo esc_attr( $clave ); ?>]"
+							value="<?php echo esc_attr( $p[ $clave ] ); ?>">
+						<code class="ncm-color__hex"><?php echo esc_html( $p[ $clave ] ); ?></code>
+						<?php if ( '' !== $col[1] ) : ?>
+							<p class="description"><?php echo esc_html( $col[1] ); ?></p>
+						<?php endif; ?>
+					</td>
+				</tr>
+			<?php endforeach; ?>
+		</table>
+
+		<p class="description">
+			Los colores de arriba solo se aplican con la paleta <strong>Personalizada</strong>; con las demás
+			quedan guardados pero no se usan.
+		</p>
 		<?php
 	}
 
@@ -614,6 +727,11 @@ class NCM_Admin {
 			? self::no_negativo( self::a_numero( $entrada['redondeo_precio'] ), 'Redondeo del precio' )
 			: $actual['redondeo_precio'];
 
+		if ( isset( $entrada['whatsapp_numero'] ) && '' !== trim( (string) $entrada['whatsapp_numero'] )
+			&& '' === NCM_Data::normalizar_telefono( $entrada['whatsapp_numero'] ) ) {
+			self::avisar( 'WhatsApp: el número no parece válido (deben quedar entre 7 y 15 dígitos con el indicativo de país), así que se guardó vacío y el botón no se mostrará.' );
+		}
+
 		if ( 0.0 === (float) $merma ) {
 			self::avisar( 'Parámetros: un factor de merma de 0 deja el componente de metal en 0. Revísalo si no era la intención.' );
 		}
@@ -623,6 +741,16 @@ class NCM_Admin {
 			'margen_comercial'   => $margen / 100,
 			'factor_merma_metal' => $merma,
 			'redondeo_precio'    => $redondeo,
+			'whatsapp_activo'    => isset( $entrada['whatsapp_activo'] ) ? ! empty( $entrada['whatsapp_activo'] ) : $actual['whatsapp_activo'],
+			'whatsapp_numero'    => isset( $entrada['whatsapp_numero'] ) ? NCM_Data::normalizar_telefono( $entrada['whatsapp_numero'] ) : $actual['whatsapp_numero'],
+			'whatsapp_mensaje'   => isset( $entrada['whatsapp_mensaje'] ) ? sanitize_textarea_field( $entrada['whatsapp_mensaje'] ) : $actual['whatsapp_mensaje'],
+			'paleta'             => isset( $entrada['paleta'] ) && in_array( $entrada['paleta'], NCM_Data::get_paletas(), true ) ? $entrada['paleta'] : $actual['paleta'],
+			'color_acento'       => isset( $entrada['color_acento'] ) ? NCM_Data::normalizar_color( $entrada['color_acento'], $actual['color_acento'] ) : $actual['color_acento'],
+			'color_acento_texto' => isset( $entrada['color_acento_texto'] ) ? NCM_Data::normalizar_color( $entrada['color_acento_texto'], $actual['color_acento_texto'] ) : $actual['color_acento_texto'],
+			'color_tinta'        => isset( $entrada['color_tinta'] ) ? NCM_Data::normalizar_color( $entrada['color_tinta'], $actual['color_tinta'] ) : $actual['color_tinta'],
+			'color_fondo'        => isset( $entrada['color_fondo'] ) ? NCM_Data::normalizar_color( $entrada['color_fondo'], $actual['color_fondo'] ) : $actual['color_fondo'],
+			'color_fondo_alt'    => isset( $entrada['color_fondo_alt'] ) ? NCM_Data::normalizar_color( $entrada['color_fondo_alt'], $actual['color_fondo_alt'] ) : $actual['color_fondo_alt'],
+			'color_linea'        => isset( $entrada['color_linea'] ) ? NCM_Data::normalizar_color( $entrada['color_linea'], $actual['color_linea'] ) : $actual['color_linea'],
 			'moneda'             => isset( $entrada['moneda'] ) ? sanitize_text_field( $entrada['moneda'] ) : $actual['moneda'],
 			'texto_publico'      => isset( $entrada['texto_publico'] ) ? sanitize_textarea_field( $entrada['texto_publico'] ) : $actual['texto_publico'],
 			'texto_nota'         => isset( $entrada['texto_nota'] ) ? sanitize_textarea_field( $entrada['texto_nota'] ) : $actual['texto_nota'],

@@ -38,6 +38,16 @@ class NCM_Data {
 				'redondeo_precio'    => 10000,
 				'moneda'             => 'COP',
 				'texto_publico'      => 'Calcula el precio estimado de tu joya a la medida: elige el tipo de pieza, el diseño, la gema, su origen, la talla y el metal, y obtén al instante un valor de referencia. Cada pieza de NCM se fabrica a mano y bajo pedido en Colombia, con gemas naturales o de laboratorio y metales certificados.',
+				'whatsapp_activo'    => true,
+				'whatsapp_numero'    => '',
+				'whatsapp_mensaje'   => "Hola, quiero cotizar esta pieza:\n\n{tipo} · {diseno}\nGema: {gema} ({origen})\nTalla: {talla}\nMetal: {metal}\n\nPrecio estimado: {precio}",
+				'paleta'             => 'ncm',
+				'color_acento'       => '#354C3F',
+				'color_acento_texto' => '#FFFFFF',
+				'color_tinta'        => '#1D1E1B',
+				'color_fondo'        => '#FFFFFF',
+				'color_fondo_alt'    => '#F2EEE3',
+				'color_linea'        => '#E5DECC',
 				'texto_nota'         => 'Valor estimado para la configuración seleccionada. El precio final puede variar según talla, dimensiones, características específicas de la gema, origen de la gema y personalizaciones adicionales.',
 			),
 
@@ -142,6 +152,16 @@ class NCM_Data {
 			'moneda'             => 'COP',
 			'texto_publico'      => '',
 			'texto_nota'         => '',
+			'whatsapp_activo'    => true,
+			'whatsapp_numero'    => '',
+			'whatsapp_mensaje'   => '',
+			'paleta'             => 'ncm',
+			'color_acento'       => '#354C3F',
+			'color_acento_texto' => '#FFFFFF',
+			'color_tinta'        => '#1D1E1B',
+			'color_fondo'        => '#FFFFFF',
+			'color_fondo_alt'    => '#F2EEE3',
+			'color_linea'        => '#E5DECC',
 		);
 
 		$out = array();
@@ -155,6 +175,16 @@ class NCM_Data {
 		$param['moneda']             = (string) $param['moneda'];
 		$param['texto_publico']      = (string) $param['texto_publico'];
 		$param['texto_nota']         = (string) $param['texto_nota'];
+
+		$param['whatsapp_activo']  = self::a_booleano( $param['whatsapp_activo'] );
+		$param['whatsapp_numero']  = self::normalizar_telefono( $param['whatsapp_numero'] );
+		$param['whatsapp_mensaje'] = (string) $param['whatsapp_mensaje'];
+
+		$param['paleta'] = in_array( $param['paleta'], self::get_paletas(), true ) ? $param['paleta'] : 'ncm';
+
+		foreach ( array( 'color_acento', 'color_acento_texto', 'color_tinta', 'color_fondo', 'color_fondo_alt', 'color_linea' ) as $clave ) {
+			$param[ $clave ] = self::normalizar_color( $param[ $clave ], $defaults_param[ $clave ] );
+		}
 
 		$out['parametros'] = $param;
 
@@ -212,6 +242,46 @@ class NCM_Data {
 		$out['origenes'] = $origenes;
 
 		return $out;
+	}
+
+	/** Paletas disponibles para el formulario. */
+	public static function get_paletas() {
+		return array( 'ncm', 'claro', 'oscuro', 'personalizada' );
+	}
+
+	/**
+	 * Deja un número de WhatsApp en el formato que espera wa.me.
+	 *
+	 * Solo dígitos, con indicativo de país y sin `+`, espacios ni guiones. Se
+	 * descarta lo que no parezca un número de teléfono internacional.
+	 *
+	 * @param mixed $valor Número tal como se escribió.
+	 * @return string Número limpio, o '' si no es plausible.
+	 */
+	public static function normalizar_telefono( $valor ) {
+		$digitos = preg_replace( '/\D+/', '', (string) $valor );
+
+		if ( '' === $digitos ) {
+			return '';
+		}
+
+		// Los números internacionales van de 7 a 15 dígitos (E.164).
+		$largo = strlen( $digitos );
+
+		return ( $largo >= 7 && $largo <= 15 ) ? $digitos : '';
+	}
+
+	/**
+	 * Valida un color hexadecimal.
+	 *
+	 * @param mixed  $valor    Color recibido.
+	 * @param string $fallback Valor por defecto si no es válido.
+	 * @return string
+	 */
+	public static function normalizar_color( $valor, $fallback = '#000000' ) {
+		$valor = trim( (string) $valor );
+
+		return preg_match( '/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/', $valor ) ? strtoupper( $valor ) : $fallback;
 	}
 
 	/** Interpreta "0", "", "no", false... como falso. */

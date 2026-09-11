@@ -124,3 +124,21 @@
 	text-align: center;
 	cursor: help;
 }
+
+/* ---------- Pestaña de apariencia ---------- */
+
+.ncm-color {
+	width: 56px;
+	height: 34px;
+	padding: 2px;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	vertical-align: middle;
+	cursor: pointer;
+}
+
+.ncm-color__hex {
+	margin-left: 8px;
+	color: #50575e;
+	vertical-align: middle;
+}

@@ -18,6 +18,10 @@
 	--ncm-acento: #8a6d3b;
 	--ncm-acento-claro: #f3ece1;
 	--ncm-acento-oscuro: #6d5530;
+	--ncm-sobre-acento: #ffffff;
+	--ncm-velo: rgba(255, 255, 255, 0.92);
+	--ncm-whatsapp: #25d366;
+	--ncm-whatsapp-oscuro: #1da851;
 	--ncm-error: #9a3b28;
 
 	/* Formas */
@@ -404,7 +408,7 @@
 	height: 22px;
 	border-radius: 50%;
 	background: var(--ncm-acento);
-	color: #fff;
+	color: var(--ncm-sobre-acento);
 	opacity: 0;
 	transform: scale(0.6);
 	transition: opacity var(--ncm-transicion), transform var(--ncm-transicion);
@@ -459,7 +463,7 @@
 	padding: 14px 16px;
 	border: 1px solid var(--ncm-linea);
 	border-radius: var(--ncm-radio);
-	background: rgba(255, 255, 255, 0.92);
+	background: var(--ncm-velo);
 	backdrop-filter: blur(8px);
 	box-shadow: var(--ncm-sombra);
 }
@@ -509,7 +513,7 @@
 	border: 1px solid var(--ncm-acento);
 	border-radius: 999px;
 	background: var(--ncm-acento);
-	color: #fff;
+	color: var(--ncm-sobre-acento);
 	font: inherit;
 	font-size: 14px;
 	font-weight: 600;
@@ -520,8 +524,7 @@
 
 .ncm-calc__boton:hover:not([disabled]),
 .ncm-calc__boton:focus-visible:not([disabled]) {
-	background: var(--ncm-acento-oscuro);
-	border-color: var(--ncm-acento-oscuro);
+	filter: brightness(0.9);
 	transform: translateY(-1px);
 }
 
@@ -555,6 +558,35 @@
 
 .ncm-calc__aviso--visible {
 	display: block;
+}
+
+.ncm-calc__whatsapp {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	border-color: var(--ncm-whatsapp);
+	background: var(--ncm-whatsapp);
+	color: #fff;
+	text-decoration: none;
+}
+
+.ncm-calc__whatsapp:hover,
+.ncm-calc__whatsapp:focus-visible {
+	border-color: var(--ncm-whatsapp-oscuro);
+	background: var(--ncm-whatsapp-oscuro);
+	color: #fff;
+	text-decoration: none;
+}
+
+.ncm-calc__whatsapp-icono {
+	flex: 0 0 auto;
+}
+
+.ncm-res__acciones {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin: 0;
 }
 
 /* ---------- Resultado ---------- */
@@ -723,10 +755,6 @@
 	color: var(--ncm-tenue);
 	font-size: 12.5px;
 	line-height: 1.6;
-}
-
-.ncm-res__acciones {
-	margin: 0;
 }
 
 .ncm-res--error {

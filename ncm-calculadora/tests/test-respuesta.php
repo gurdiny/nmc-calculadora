@@ -55,6 +55,19 @@ if ( ! function_exists( 'esc_attr' ) ) {
 	}
 }
 
+if ( ! function_exists( 'esc_url' ) ) {
+	function esc_url( $url ) {
+		$url = trim( (string) $url );
+
+		// Solo esquemas seguros, como hace WordPress.
+		if ( '' !== $url && ! preg_match( '#^(https?|mailto|tel):#i', $url ) ) {
+			return '';
+		}
+
+		return htmlspecialchars( $url, ENT_QUOTES, 'UTF-8' );
+	}
+}
+
 if ( ! function_exists( 'current_user_can' ) ) {
 	function current_user_can( $cap ) {
 		return (bool) $GLOBALS['ncm_test_cap'];
@@ -147,9 +160,104 @@ foreach ( $prohibidos as $cifra => $que ) {
 
 ncm_check(
 	'las claves son exactamente las públicas',
-	array( 'entrada', 'estado', 'html', 'modo', 'moneda', 'precio_final', 'precio_final_formateado', 'texto_nota' ),
+	array( 'entrada', 'estado', 'html', 'modo', 'moneda', 'precio_final', 'precio_final_formateado', 'texto_nota', 'whatsapp' ),
 	ncm_claves_ordenadas( $publica )
 );
+
+echo "\n== WhatsApp: el mensaje tampoco puede llevar cifras internas ==\n";
+
+// Sin número configurado, no hay enlace.
+ncm_check( 'sin número no hay enlace', null, NCM_Shortcode::whatsapp( $b ) );
+
+$con_wa = NCM_Data::semilla_cruda();
+$con_wa['parametros']['whatsapp_numero'] = '+57 300 123 45 67';
+NCM_Data::guardar_config( $con_wa );
+NCM_Data::limpiar_cache();
+
+$wa = NCM_Shortcode::whatsapp( $b );
+
+ncm_check( 'número normalizado a E.164', '573001234567', $wa['numero'] );
+ncm_check( 'la url apunta a wa.me', true, 0 === strpos( $wa['url'], 'https://wa.me/573001234567?text=' ) );
+ncm_check( 'el mensaje lleva el precio', true, false !== strpos( $wa['mensaje'], '$19.290.000' ) );
+ncm_check( 'y la selección del visitante', true, false !== strpos( $wa['mensaje'], 'Diamante' ) );
+
+foreach ( $prohibidos as $cifra => $que ) {
+	ncm_check( "el mensaje no filtra {$que}", false, false !== strpos( $wa['mensaje'], $cifra ) );
+	ncm_check( "ni la url codificada ({$que})", false, false !== strpos( rawurldecode( $wa['url'] ), $cifra ) );
+}
+
+// Y el enlace viaja en la respuesta pública, con la misma garantía.
+$publica_wa = NCM_Shortcode::respuesta( $b, false );
+$json_wa    = wp_json_encode_local( $publica_wa );
+
+ncm_check( 'la respuesta pública trae el enlace', true, is_array( $publica_wa['whatsapp'] ) );
+
+foreach ( $prohibidos as $cifra => $que ) {
+	ncm_check( "la carga con WhatsApp no filtra {$que}", false, false !== strpos( $json_wa, $cifra ) );
+}
+
+// El botón sale en el HTML de los dos modos.
+ncm_check( 'botón en el HTML público', true, false !== strpos( $publica_wa['html'], 'ncm-calc__whatsapp' ) );
+ncm_check( 'botón en el HTML interno', true, false !== strpos( NCM_Shortcode::respuesta( $b, true )['html'], 'ncm-calc__whatsapp' ) );
+
+// Desactivado, no aparece.
+$sin_wa = NCM_Data::semilla_cruda();
+$sin_wa['parametros']['whatsapp_numero'] = '573001234567';
+$sin_wa['parametros']['whatsapp_activo'] = false;
+NCM_Data::guardar_config( $sin_wa );
+NCM_Data::limpiar_cache();
+
+ncm_check( 'desactivado no genera enlace', null, NCM_Shortcode::whatsapp( $b ) );
+ncm_check( 'ni botón en el HTML', false, false !== strpos( NCM_Shortcode::respuesta( $b, false )['html'], 'ncm-calc__whatsapp' ) );
+
+// Una plantilla con un marcador inventado se deja tal cual, no revienta.
+$raro = NCM_Data::semilla_cruda();
+$raro['parametros']['whatsapp_numero']  = '573001234567';
+$raro['parametros']['whatsapp_mensaje'] = 'Precio {precio} y {inventado} y {costo_produccion}';
+NCM_Data::guardar_config( $raro );
+NCM_Data::limpiar_cache();
+
+$wa_raro = NCM_Shortcode::whatsapp( $b );
+
+ncm_check( 'marcador válido resuelto', true, false !== strpos( $wa_raro['mensaje'], '$19.290.000' ) );
+ncm_check( 'marcador inventado intacto', true, false !== strpos( $wa_raro['mensaje'], '{inventado}' ) );
+ncm_check( 'no existe marcador para el costo', true, false !== strpos( $wa_raro['mensaje'], '{costo_produccion}' ) );
+
+NCM_Data::restaurar_semilla();
+NCM_Data::limpiar_cache();
+
+echo "\n== Paleta de colores ==\n";
+
+ncm_check( 'la paleta por defecto es la de NCM', true, false !== strpos( NCM_Shortcode::css_paleta(), '--e-global-color-primary' ) );
+
+$oscura = NCM_Data::semilla_cruda();
+$oscura['parametros']['paleta'] = 'oscuro';
+NCM_Data::guardar_config( $oscura );
+NCM_Data::limpiar_cache();
+
+ncm_check( 'la paleta oscura no depende de Elementor', false, false !== strpos( NCM_Shortcode::css_paleta(), '--e-global-color' ) );
+ncm_check( 'y usa su fondo oscuro', true, false !== strpos( NCM_Shortcode::css_paleta(), '#1D1E1B' ) );
+
+$sucia = NCM_Data::semilla_cruda();
+$sucia['parametros']['paleta']       = 'personalizada';
+$sucia['parametros']['color_acento'] = 'red; } body { display:none } .x{';
+NCM_Data::guardar_config( $sucia );
+NCM_Data::limpiar_cache();
+
+$css = NCM_Shortcode::css_paleta();
+
+ncm_check( 'un color inválido no se cuela en el CSS', false, false !== strpos( $css, 'display:none' ) );
+ncm_check( 'cae al valor por defecto', true, false !== strpos( $css, '#354C3F' ) );
+
+$paleta_falsa = NCM_Data::semilla_cruda();
+$paleta_falsa['parametros']['paleta'] = '../../etc/passwd';
+NCM_Data::guardar_config( $paleta_falsa );
+NCM_Data::limpiar_cache();
+
+ncm_check( 'una paleta inexistente cae en ncm', 'ncm', NCM_Data::get_parametro( 'paleta' ) );
+
+NCM_Data::restaurar_semilla();
+NCM_Data::limpiar_cache();
 
 echo "\n== (b) Petición CON sesión: desglose completo ==\n";
 

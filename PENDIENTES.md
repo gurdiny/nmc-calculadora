@@ -3,35 +3,34 @@
 Decisiones abiertas y trabajo identificado pero no hecho. Cada punto dice qué
 pasa hoy, cuál es el riesgo y qué haría falta para cerrarlo.
 
-Última actualización: 2026-09-10.
+Última actualización: 2026-09-10. Cerrados los puntos 1, 3 y 4 antes de
+publicar en producción.
 
 ---
 
 ## 1. Nonce y caché de página en la calculadora pública
 
-**Estado:** abierto. Necesita una decisión de infraestructura.
+**Estado: CERRADO** (documentado, sin tocar código).
 
-Desde que la calculadora es pública, el nonce de WordPress viaja dentro del HTML
-de la página. Los nonces caducan (12–24 h) y van atados a la sesión.
+El nonce sigue viajando en el HTML y sigue caducando a las 24 h; lo que se hizo
+fue **documentar la exclusión del caché** en el README, en una sección propia
+titulada *Importante: caché*, con:
 
-**Riesgo:** si la página pública se sirve desde un plugin de caché o un CDN con
-TTL largo, los visitantes recibirán un nonce ya vencido y el cálculo responderá
-**403**. La página se verá bien —el texto y el precio "desde" están en el HTML—
-pero el botón de calcular fallará en silencio para una parte del tráfico.
+- el **síntoma** a reconocer (el botón falla con 403 en silencio, sin error en el
+  log de PHP);
+- la causa y qué cachés afectan (solo el de página y el del CDN);
+- los ajustes concretos para **WP Rocket, W3 Total Cache, LiteSpeed y WP Super
+  Cache**, y las reglas de bypass para **Cloudflare**;
+- cómo comprobar que quedó bien (el nonce debe cambiar entre peticiones separadas
+  en el tiempo).
 
-**Opciones:**
+Queda recordado también en *Mantenimiento*, para cuando se despliegue en un sitio
+nuevo.
 
-1. **Excluir del caché** la página de la calculadora (o el fragmento del nonce).
-   Es lo más simple y no toca código.
-2. **Refrescar el nonce por AJAX** al cargar la página (endpoint público que
-   devuelve un nonce nuevo). Añade una petición por visita.
-3. **Quitar el nonce en la ruta anónima.** El endpoint es de solo lectura y no
-   cambia nada, así que el CSRF no aplica; pero contradice la instrucción
-   explícita de mantener el nonce en ambos casos, así que no se hizo.
-
-**Recomendación:** la 1. Si el sitio no usa caché de página, no hay nada que
-hacer, pero conviene dejarlo escrito antes de que alguien instale un plugin de
-caché.
+**Lo que sigue abierto (por si algún día molesta):** si el equipo decide que la
+página pública *tiene* que estar cacheada, las opciones son refrescar el nonce
+por AJAX al cargar (una petición más por visita) o el ESI de LiteSpeed. No se
+hizo porque excluir la página es más simple y más robusto.
 
 ---
 
@@ -55,31 +54,35 @@ validación) más un test.
 
 ## 3. El documento de fases quedó desactualizado
 
-**Estado:** abierto. Trabajo de documentación.
+**Estado: CERRADO.**
 
-`FASES_Calculadora_NCM_WordPress.md` sigue describiendo la calculadora como
-**solo interna** en las fases 4 y 5 ("registrar solo `wp_ajax_ncm_calcular` (NO
-`nopriv`)", "solo visible logueado"). Eso ya no es cierto: desde el cambio de
-alcance hay dos modos y `CLAUDE.md` documenta el modelo correcto.
+`FASES_Calculadora_NCM_WordPress.md` ya describe el modelo real:
 
-**Riesgo:** que alguien (persona o agente) lea el documento de fases como fuente
-de verdad y "arregle" el `nopriv`, rompiendo la calculadora pública.
-
-**Para cerrarlo:** reescribir las fases 4 y 5 del documento para que describan el
-filtrado en servidor, o marcarlas como históricas y remitir a `CLAUDE.md`.
+- **Nota de precedencia al inicio**, en un bloque destacado: si hay cualquier
+  discrepancia con `CLAUDE.md` sobre quién ve qué, gana `CLAUDE.md`. Y dice
+  explícitamente que el registro `wp_ajax_nopriv_ncm_calcular` **es correcto y no
+  se debe quitar**.
+- **Fase 4 reescrita**: un endpoint para los dos modos, nonce siempre, la
+  decisión en `is_user_logged_in()`, la tabla de allowlist pública frente a la
+  respuesta interna, y el HTML público generado aparte. Lleva una *nota
+  histórica* que dice qué decía antes y por qué ya no aplica.
+- **Fase 5 reescrita**: los dos shortcodes, qué devuelve cada uno, el contenido
+  de SEO y las tarjetas con imagen.
+- **Sección "Qué NO hacer"** al final, encabezada por "no quitar el `nopriv`".
+- Nota en los datos semilla sobre la columna `imagen`, que el Excel no tiene.
 
 ---
 
 ## 4. El proyecto no está bajo control de versiones
 
-**Estado:** abierto.
+**Estado: CERRADO.**
 
-La carpeta no es un repositorio git, así que no hay historial, no se puede
-revisar un diff y `/security-review` no puede correr.
+`git init` hecho, con un primer commit de los 27 archivos del proyecto y el árbol
+limpio, así que `/security-review` ya puede correr.
 
-**Para cerrarlo:** `git init`, un `.gitignore` que excluya `vendor/`, `dist/`,
-`node_modules/` y `.wp-env.json` si se prefiere no versionarlo, y un primer
-commit.
+El `.gitignore` deja fuera `vendor/`, `dist/`, `node_modules/`,
+`.wp-env.json` y `.phpunit.result.cache`. **Sí** se versiona `composer.lock`,
+para que las dependencias de desarrollo sean reproducibles.
 
 ---
 
@@ -112,3 +115,26 @@ diseño de ese tipo que tenga una**.
 **Si molesta:** habría que añadir una matriz `tipos` (nombre + imagen) al panel y
 que los diseños apunten a ella. Es más limpio, pero cambia el modelo de datos y
 la semilla.
+
+---
+
+## 7. La vista interna muestra costos a cualquier usuario registrado
+
+**Estado:** documentado como supuesto; revisar si cambia la política de registro.
+
+`[ncm_calculadora_interna]` exige sesión y la capacidad `read`, que tiene
+**cualquier usuario registrado**, incluido un suscriptor. Hoy eso es seguro
+porque el registro del sitio está cerrado y los usuarios los crea un
+administrador.
+
+**El día que se abra el registro público** —una tienda, un área de clientes, un
+formulario de alta— cualquiera podría registrarse y ver el costo de producción y
+el margen de NCM.
+
+**Para cerrarlo entonces:** subir `NCM_Shortcode::CAP` de `read` a `edit_posts`,
+`edit_others_posts` o `manage_options`, según quién deba cotizar. Es un cambio de
+una línea en `public/class-ncm-shortcode.php`, pero el plugin no puede detectar
+solo que cambió la política de registro: hay que acordarse.
+
+Queda escrito en el README, en *Seguridad → Supuesto: quién puede ver costos y
+margen*.

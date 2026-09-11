@@ -1,0 +1,22 @@
+# Dependencias de desarrollo (PHPUnit y compañía): se reinstalan con composer.
+/ncm-calculadora/vendor/
+
+# Paquetes generados por bin/empaquetar.sh.
+/dist/
+
+# Caché de resultados de PHPUnit.
+.phpunit.result.cache
+
+# Node.
+node_modules/
+
+# Configuración local del entorno de wp-env.
+/ncm-calculadora/.wp-env.json
+
+# Basura de sistema y editores.
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/

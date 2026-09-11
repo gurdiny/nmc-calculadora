@@ -60,6 +60,25 @@ class WhatsAppTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Los saltos de línea tienen que sobrevivir hasta el HTML.
+	 *
+	 * esc_url() borra los `%0a`, así que el href se escapa con esc_attr(). Si
+	 * alguien lo devuelve a esc_url(), al cliente le llega el mensaje pegado en
+	 * un solo párrafo y esta prueba lo avisa.
+	 */
+	public function test_el_href_conserva_los_saltos_de_linea() {
+		$r = $this->con_numero( '573001234567' );
+
+		$this->assertStringContainsString( '%0A', NCM_Shortcode::whatsapp( $r )['url'] );
+
+		foreach ( array( false, true ) as $interno ) {
+			$html = NCM_Shortcode::respuesta( $r, $interno )['html'];
+
+			$this->assertMatchesRegularExpression( '/href="https:\/\/wa\.me\/[^"]*%0A/', $html );
+		}
+	}
+
+	/**
 	 * El mensaje va igual para todos, así que no puede llevar costos.
 	 *
 	 * @dataProvider cifras_prohibidas

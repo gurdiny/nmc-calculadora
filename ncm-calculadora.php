@@ -3,7 +3,7 @@
  * Plugin Name:       Calculadora de Joyas NCM
  * Plugin URI:        https://ncm.com.co/
  * Description:       Calculadora de cotización de joyas de NCM: replica el Excel. Versión pública [ncm_calculadora] (solo el precio) y versión interna [ncm_calculadora_interna] (desglose completo). Panel de configuración propio, sin dependencias.
- * Version:           1.3.2
+ * Version:           1.3.3
  * Requires at least: 5.8
  * Requires PHP:      7.2
  * Author:            NCM
@@ -30,7 +30,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'NCM_CALC_VERSION', '1.3.2' );
+define( 'NCM_CALC_VERSION', '1.3.3' );
 define( 'NCM_CALC_FILE', __FILE__ );
 define( 'NCM_CALC_PATH', plugin_dir_path( __FILE__ ) );
 define( 'NCM_CALC_URL', plugin_dir_url( __FILE__ ) );

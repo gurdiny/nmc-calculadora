@@ -296,9 +296,12 @@ $mal = $calc->calcular( 'Pulsera', 'Solitario', 'Natural', 'Diamante', 'Redonda'
 $err_publico = NCM_Shortcode::respuesta_error( $mal, false );
 $err_interno = NCM_Shortcode::respuesta_error( $mal, true );
 
-ncm_check( 'público ve REVISAR CONFIGURACIÓN', 'REVISAR CONFIGURACIÓN', $err_publico['mensaje'] );
+ncm_check( 'público lee un mensaje para clientes', NCM_Shortcode::MENSAJE_NO_DISPONIBLE, $err_publico['mensaje'] );
+ncm_check( 'y no el recado interno', false, false !== strpos( $err_publico['mensaje'], 'REVISAR' ) );
+ncm_check( 'ni siquiera en el HTML', false, false !== strpos( $err_publico['html'], 'REVISAR' ) );
 ncm_check( 'público no ve el detalle', false, array_key_exists( 'detalle', $err_publico ) );
 ncm_check( 'y tampoco en el HTML', false, false !== strpos( $err_publico['html'], 'no existe en la matriz' ) );
+ncm_check( 'interno sigue viendo REVISAR CONFIGURACIÓN', 'REVISAR CONFIGURACIÓN', $err_interno['mensaje'] );
 ncm_check( 'interno sí ve el detalle', true, array_key_exists( 'detalle', $err_interno ) );
 
 echo "\n== Todas las combinaciones de la matriz, en modo público ==\n";

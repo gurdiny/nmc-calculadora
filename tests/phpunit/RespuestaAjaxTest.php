@@ -241,7 +241,10 @@ class RespuestaAjaxTest extends WP_Ajax_UnitTestCase {
 
 		$this->assertFalse( $respuesta['success'] );
 		$this->assertSame( 'REVISAR_CONFIGURACION', $respuesta['data']['estado'] );
-		$this->assertSame( 'REVISAR CONFIGURACIÓN', $respuesta['data']['mensaje'] );
+
+		// Al visitante se le habla en su idioma; el recado interno se queda dentro.
+		$this->assertSame( NCM_Shortcode::MENSAJE_NO_DISPONIBLE, $respuesta['data']['mensaje'] );
+		$this->assertStringNotContainsString( 'REVISAR CONFIGURACIÓN', $this->_last_response );
 		$this->assertArrayNotHasKey( 'detalle', $respuesta['data'] );
 		$this->assertStringNotContainsString( 'no existe en la matriz', $this->_last_response );
 	}

@@ -712,6 +712,15 @@ class NCM_Shortcode {
 	}
 
 	/**
+	 * Lo que lee un visitante cuando la combinación no se puede cotizar.
+	 *
+	 * "REVISAR CONFIGURACIÓN" es un recado para el equipo —viene del Excel— y a
+	 * un cliente no le dice nada: le suena a que la página está rota. El equipo
+	 * lo sigue viendo tal cual en la versión interna, junto al motivo técnico.
+	 */
+	const MENSAJE_NO_DISPONIBLE = 'Esta combinación no está disponible en este momento. Escríbenos y la cotizamos para ti.';
+
+	/**
 	 * Respuesta cuando la combinación no es calculable.
 	 *
 	 * El detalle técnico solo se le da a quien puede configurar el plugin.
@@ -724,7 +733,7 @@ class NCM_Shortcode {
 		$salida = array(
 			'modo'    => $interno ? self::MODO_INTERNO : self::MODO_PUBLICO,
 			'estado'  => $r['estado'],
-			'mensaje' => NCM_Calculator::ERROR_CONFIG,
+			'mensaje' => $interno ? NCM_Calculator::ERROR_CONFIG : self::MENSAJE_NO_DISPONIBLE,
 			'html'    => self::html_error( $r, $interno ),
 		);
 
@@ -792,8 +801,17 @@ class NCM_Shortcode {
 		if ( null === $whatsapp ) {
 			return;
 		}
+
+		/*
+		 * Aquí va esc_attr() y no esc_url() a propósito. esc_url() borra los
+		 * `%0a` y `%0d` —se defiende de la inyección de cabeceras—, y con ellos
+		 * se iban los saltos de línea del mensaje: al cliente le llegaba todo
+		 * pegado en un párrafo. La URL no la toca el visitante: el número queda
+		 * en dígitos (normalizar_telefono) y el mensaje entero pasa por
+		 * rawurlencode(), así que el esquema y el host son siempre nuestros.
+		 */
 		?>
-		<a class="ncm-calc__boton ncm-calc__whatsapp" href="<?php echo esc_url( $whatsapp['url'] ); ?>"
+		<a class="ncm-calc__boton ncm-calc__whatsapp" href="<?php echo esc_attr( $whatsapp['url'] ); ?>"
 			target="_blank" rel="noopener noreferrer nofollow">
 			<svg class="ncm-calc__whatsapp-icono" viewBox="0 0 24 24" width="18" height="18"
 				fill="currentColor" aria-hidden="true" focusable="false">
@@ -943,7 +961,9 @@ class NCM_Shortcode {
 		ob_start();
 		?>
 		<div class="ncm-res ncm-res--error">
-			<p class="ncm-res__error"><?php echo esc_html( NCM_Calculator::ERROR_CONFIG ); ?></p>
+			<p class="ncm-res__error">
+				<?php echo esc_html( $interno ? NCM_Calculator::ERROR_CONFIG : self::MENSAJE_NO_DISPONIBLE ); ?>
+			</p>
 			<?php if ( $interno && current_user_can( 'manage_options' ) && ! empty( $r['error_detalle'] ) ) : ?>
 				<p class="ncm-res__error-detalle"><?php echo esc_html( $r['error_detalle'] ); ?></p>
 			<?php endif; ?>

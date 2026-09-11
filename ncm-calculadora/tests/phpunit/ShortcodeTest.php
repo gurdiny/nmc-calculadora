@@ -98,6 +98,145 @@ class ShortcodeTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'anillo', $html );
 	}
 
+	/**
+	 * Asigna una imagen a la gema Diamante y devuelve el HTML público.
+	 *
+	 * @param int $adjunto Id del adjunto.
+	 * @return string
+	 */
+	private function html_con_imagen_en_diamante( $adjunto ) {
+		$config = NCM_Data::get_config();
+
+		foreach ( $config['gemas'] as $i => $gema ) {
+			if ( 'Diamante' === $gema['tipo_gema'] ) {
+				$config['gemas'][ $i ]['imagen'] = $adjunto;
+			}
+		}
+
+		NCM_Data::guardar_config( $config );
+		NCM_Data::limpiar_cache();
+
+		wp_set_current_user( 0 );
+
+		return do_shortcode( '[ncm_calculadora]' );
+	}
+
+	/** Un adjunto de una entrada en borrador no llega a la página pública. */
+	public function test_una_imagen_de_un_borrador_no_se_publica() {
+		$borrador = self::factory()->post->create( array( 'post_status' => 'draft' ) );
+		$adjunto  = self::factory()->attachment->create_object(
+			array(
+				'file'           => 'privada.jpg',
+				'post_parent'    => $borrador,
+				'post_mime_type' => 'image/jpeg',
+			)
+		);
+
+		$this->assertSame( 0, NCM_Data::imagen_publicable( $adjunto ) );
+
+		$html = $this->html_con_imagen_en_diamante( $adjunto );
+
+		$this->assertStringNotContainsString( 'privada', $html );
+		$this->assertStringNotContainsString( '<img', $html );
+		$this->assertStringContainsString( 'ncm-opcion__monograma', $html );
+	}
+
+	/** Un adjunto de una entrada privada tampoco. */
+	public function test_una_imagen_de_una_entrada_privada_no_se_publica() {
+		$privada = self::factory()->post->create( array( 'post_status' => 'private' ) );
+		$adjunto = self::factory()->attachment->create_object(
+			array(
+				'file'           => 'reservada.jpg',
+				'post_parent'    => $privada,
+				'post_mime_type' => 'image/jpeg',
+			)
+		);
+
+		$this->assertSame( 0, NCM_Data::imagen_publicable( $adjunto ) );
+		$this->assertStringNotContainsString( 'reservada', $this->html_con_imagen_en_diamante( $adjunto ) );
+	}
+
+	/** Un adjunto que no es imagen se ignora. */
+	public function test_un_adjunto_que_no_es_imagen_se_ignora() {
+		$pdf = self::factory()->attachment->create_object(
+			array(
+				'file'           => 'tarifas.pdf',
+				'post_mime_type' => 'application/pdf',
+			)
+		);
+
+		$this->assertSame( 0, NCM_Data::imagen_publicable( $pdf ) );
+		$this->assertStringNotContainsString( 'tarifas', $this->html_con_imagen_en_diamante( $pdf ) );
+	}
+
+	/** Un id que ya no existe se ignora sin romper nada. */
+	public function test_un_adjunto_borrado_se_ignora() {
+		$adjunto = self::factory()->attachment->create_object(
+			array(
+				'file'           => 'borrada.jpg',
+				'post_mime_type' => 'image/jpeg',
+			)
+		);
+
+		wp_delete_attachment( $adjunto, true );
+
+		$this->assertSame( 0, NCM_Data::imagen_publicable( $adjunto ) );
+		$this->assertSame( 0, NCM_Data::imagen_publicable( 999999 ) );
+		$this->assertSame( 0, NCM_Data::imagen_publicable( 0 ) );
+		$this->assertSame( 0, NCM_Data::imagen_publicable( -5 ) );
+
+		$this->assertStringNotContainsString( '<img', $this->html_con_imagen_en_diamante( $adjunto ) );
+	}
+
+	/** Una imagen sin entrada padre sí es publicable. */
+	public function test_una_imagen_sin_padre_si_se_publica() {
+		$adjunto = self::factory()->attachment->create_object(
+			array(
+				'file'           => 'suelta.jpg',
+				'post_mime_type' => 'image/jpeg',
+			)
+		);
+
+		$this->assertSame( $adjunto, NCM_Data::imagen_publicable( $adjunto ) );
+		$this->assertStringContainsString( 'suelta', $this->html_con_imagen_en_diamante( $adjunto ) );
+	}
+
+	/** La imagen del tipo también respeta la validación. */
+	public function test_la_imagen_del_tipo_ignora_adjuntos_no_publicables() {
+		$borrador = self::factory()->post->create( array( 'post_status' => 'draft' ) );
+		$oculta   = self::factory()->attachment->create_object(
+			array(
+				'file'           => 'oculta.jpg',
+				'post_parent'    => $borrador,
+				'post_mime_type' => 'image/jpeg',
+			)
+		);
+		$buena    = self::factory()->attachment->create_object(
+			array(
+				'file'           => 'buena.jpg',
+				'post_mime_type' => 'image/jpeg',
+			)
+		);
+
+		$config = NCM_Data::get_config();
+
+		foreach ( $config['disenos'] as $i => $diseno ) {
+			if ( 'AN-SOL' === $diseno['codigo'] ) {
+				$config['disenos'][ $i ]['imagen'] = $oculta;
+			}
+
+			if ( 'AN-TRI' === $diseno['codigo'] ) {
+				$config['disenos'][ $i ]['imagen'] = $buena;
+			}
+		}
+
+		NCM_Data::guardar_config( $config );
+		NCM_Data::limpiar_cache();
+
+		// Se salta la del borrador y usa la siguiente que sí es publicable.
+		$this->assertSame( $buena, NCM_Data::get_imagen_tipo( 'Anillo' ) );
+	}
+
 	/** La imagen de un tipo sale del primer diseño de ese tipo que tenga una. */
 	public function test_la_imagen_del_tipo_sale_de_sus_disenos() {
 		$adjunto = self::factory()->attachment->create_object(

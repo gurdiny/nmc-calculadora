@@ -439,6 +439,16 @@ class NCM_Admin {
 	 */
 	private static function campo_imagen( $nombre, $id ) {
 		$src = $id ? wp_get_attachment_image_url( $id, 'thumbnail' ) : '';
+
+		// Se avisa si la imagen no se va a poder mostrar en la página pública.
+		$publicable = NCM_Data::imagen_publicable( $id );
+		$problema   = '';
+
+		if ( $id && ! $publicable ) {
+			$problema = wp_attachment_is_image( $id )
+				? 'La entrada a la que pertenece esta imagen no está publicada, así que no se verá en la calculadora pública.'
+				: 'Este adjunto no es una imagen (o ya no existe), así que no se verá en la calculadora.';
+		}
 		?>
 		<span class="ncm-imagen" data-ncm-imagen>
 			<input type="hidden" class="ncm-imagen__id" name="<?php echo esc_attr( $nombre ); ?>"
@@ -453,6 +463,10 @@ class NCM_Admin {
 			</button>
 
 			<button type="button" class="button-link ncm-imagen__quitar" <?php echo $src ? '' : 'hidden'; ?>>Quitar</button>
+
+			<?php if ( '' !== $problema ) : ?>
+				<span class="ncm-imagen__problema" title="<?php echo esc_attr( $problema ); ?>">⚠ no se verá</span>
+			<?php endif; ?>
 		</span>
 		<?php
 	}

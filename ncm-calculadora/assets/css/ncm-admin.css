@@ -115,3 +115,12 @@
 .ncm-tabla td:last-child {
 	white-space: nowrap;
 }
+
+.ncm-imagen__problema {
+	max-width: 70px;
+	color: #b26200;
+	font-size: 10.5px;
+	line-height: 1.2;
+	text-align: center;
+	cursor: help;
+}

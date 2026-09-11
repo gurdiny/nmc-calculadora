@@ -371,6 +371,42 @@ class NCM_Data {
 	}
 
 	/**
+	 * Devuelve el id de imagen solo si se puede mostrar en público.
+	 *
+	 * El panel guarda cualquier id de adjunto que se elija en la mediateca, y
+	 * ahí caben cosas que no deberían acabar en la página pública: un PDF, un
+	 * adjunto de una entrada en borrador o privada, o uno que ya se borró. Esto
+	 * se comprueba **al mostrar**, no al guardar, porque es legítimo asignar una
+	 * imagen cuya entrada padre todavía no está publicada y publicarla después.
+	 *
+	 * @param int $id Id del adjunto.
+	 * @return int El mismo id si es publicable, 0 si no.
+	 */
+	public static function imagen_publicable( $id ) {
+		$id = absint( $id );
+
+		if ( ! $id ) {
+			return 0;
+		}
+
+		// Que exista y sea una imagen de verdad (no un PDF ni un vídeo).
+		if ( ! function_exists( 'wp_attachment_is_image' ) || ! wp_attachment_is_image( $id ) ) {
+			return 0;
+		}
+
+		/*
+		 * Para un adjunto, get_post_status() resuelve el 'inherit' al estado de
+		 * su entrada padre: un adjunto de un borrador devuelve 'draft', y uno de
+		 * una entrada privada, 'private'. Solo pasa 'publish'.
+		 */
+		if ( 'publish' !== get_post_status( $id ) ) {
+			return 0;
+		}
+
+		return $id;
+	}
+
+	/**
 	 * Imagen que representa a un tipo de joya.
 	 *
 	 * Los tipos no son una matriz propia: salen de la columna `tipo` de los
@@ -381,8 +417,14 @@ class NCM_Data {
 	 */
 	public static function get_imagen_tipo( $tipo ) {
 		foreach ( self::get_disenos() as $diseno ) {
-			if ( $diseno['tipo'] === $tipo && ! empty( $diseno['imagen'] ) ) {
-				return (int) $diseno['imagen'];
+			if ( $diseno['tipo'] !== $tipo ) {
+				continue;
+			}
+
+			$imagen = self::imagen_publicable( $diseno['imagen'] );
+
+			if ( $imagen ) {
+				return $imagen;
 			}
 		}
 

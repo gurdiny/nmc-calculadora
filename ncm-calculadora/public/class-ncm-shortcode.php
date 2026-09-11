@@ -431,8 +431,10 @@ class NCM_Shortcode {
 	 * @param array  $opcion  Datos de la opción.
 	 */
 	private static function render_opcion( $id, $clave, $opcion ) {
-		$valor  = $opcion['valor'];
-		$imagen = isset( $opcion['imagen'] ) ? (int) $opcion['imagen'] : 0;
+		$valor = $opcion['valor'];
+
+		// Si el adjunto no es publicable, la tarjeta cae en su monograma.
+		$imagen = isset( $opcion['imagen'] ) ? NCM_Data::imagen_publicable( $opcion['imagen'] ) : 0;
 		$datos  = isset( $opcion['datos'] ) ? $opcion['datos'] : array();
 		$oculto = ! empty( $opcion['oculto'] );
 		?>

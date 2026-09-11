@@ -6,7 +6,7 @@
  * los márgenes ni la tipografía de alrededor.
  */
 
-.ncm-calc {
+.ncm-calc.ncm-calc {
 	/* Paleta */
 	--ncm-tinta: #1f1d1a;
 	--ncm-suave: #6f6a63;
@@ -40,14 +40,135 @@
 	box-sizing: border-box;
 }
 
-.ncm-calc *,
-.ncm-calc *::before,
-.ncm-calc *::after {
+.ncm-calc.ncm-calc *,
+.ncm-calc.ncm-calc *::before,
+.ncm-calc.ncm-calc *::after {
 	box-sizing: inherit;
 }
 
+/* ---------- Blindaje contra el reset del tema ---------- */
+/*
+ * Esta hoja se encola antes que la del tema, así que en cada empate de
+ * especificidad ganaba el tema. Hello Elementor, por ejemplo, resetea
+ * `button` a `width:auto; white-space:nowrap; border:1px solid #c36`, que
+ * dejaba los pasos convertidos en cajitas rosadas.
+ *
+ * Por eso todos los selectores de aquí van prefijados con `.ncm-calc`: suman
+ * una clase y ganan por especificidad sin depender del orden de carga. Este
+ * bloque cierra el resto — lo que un reset toca y nosotros no declaramos en
+ * cada componente. Va primero a propósito: las reglas de componente que vienen
+ * después tienen al menos la misma especificidad y mandan sobre él.
+ */
+
+.ncm-calc button,
+.ncm-calc [type="button"],
+.ncm-calc [type="submit"],
+.ncm-calc [type="reset"] {
+	width: auto;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	letter-spacing: inherit;
+	text-align: inherit;
+	text-transform: none;
+	white-space: normal;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+.ncm-calc button:hover,
+.ncm-calc button:focus,
+.ncm-calc [type="button"]:hover,
+.ncm-calc [type="button"]:focus {
+	background: none;
+	color: inherit;
+}
+
+/* El tema pinta un halo blanco en el foco; la calculadora trae el suyo. */
+.ncm-calc a:focus-visible,
+.ncm-calc button:focus-visible,
+.ncm-calc input:focus-visible {
+	box-shadow: none;
+}
+
+.ncm-calc a,
+.ncm-calc a:hover,
+.ncm-calc a:focus {
+	color: inherit;
+	background-color: transparent;
+	text-decoration: none;
+}
+
+.ncm-calc label {
+	display: block;
+	line-height: inherit;
+	vertical-align: baseline;
+}
+
+.ncm-calc input,
+.ncm-calc select,
+.ncm-calc textarea {
+	margin: 0;
+	font: inherit;
+}
+
+.ncm-calc fieldset {
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.ncm-calc legend {
+	padding: 0;
+}
+
+.ncm-calc p,
+.ncm-calc h1,
+.ncm-calc h2,
+.ncm-calc h3,
+.ncm-calc h4,
+.ncm-calc h5,
+.ncm-calc h6 {
+	margin: 0;
+	font: inherit;
+	color: inherit;
+}
+
+.ncm-calc table {
+	width: 100%;
+	margin: 0;
+	border-collapse: collapse;
+	border-spacing: 0;
+	background-color: transparent;
+	font-size: inherit;
+}
+
+.ncm-calc caption,
+.ncm-calc th,
+.ncm-calc td {
+	padding: 0;
+	border: 0;
+	line-height: inherit;
+	font-weight: inherit;
+	vertical-align: baseline;
+	background-color: transparent;
+}
+
+/* El cebreado y el hover de filas del tema no aplican aquí. */
+.ncm-calc tbody > tr:nth-child(odd) > td,
+.ncm-calc tbody > tr:nth-child(odd) > th,
+.ncm-calc tbody > tr:hover > td,
+.ncm-calc tbody > tr:hover > th {
+	background-color: transparent;
+}
+
 /* Texto solo para lectores de pantalla. */
-.ncm-sr {
+.ncm-calc .ncm-sr {
 	position: absolute !important;
 	width: 1px;
 	height: 1px;
@@ -59,7 +180,7 @@
 	border: 0;
 }
 
-.ncm-calc--bloqueada {
+.ncm-calc.ncm-calc--bloqueada {
 	padding: 32px 24px;
 	border: 1px solid var(--ncm-linea);
 	border-radius: var(--ncm-radio);
@@ -67,18 +188,18 @@
 	text-align: center;
 }
 
-.ncm-calc--bloqueada p {
+.ncm-calc.ncm-calc--bloqueada p {
 	margin: 0;
 	color: var(--ncm-suave);
 }
 
 /* ---------- Intro pública (indexable, visible sin interactuar) ---------- */
 
-.ncm-calc__intro {
+.ncm-calc .ncm-calc__intro {
 	margin-bottom: 28px;
 }
 
-.ncm-calc__texto {
+.ncm-calc .ncm-calc__texto {
 	margin: 0 0 20px;
 	max-width: 68ch;
 	font-size: 17px;
@@ -86,7 +207,7 @@
 	color: var(--ncm-suave);
 }
 
-.ncm-calc__desde {
+.ncm-calc .ncm-calc__desde {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -101,7 +222,7 @@
 	text-align: center;
 }
 
-.ncm-calc__desde-etiqueta {
+.ncm-calc .ncm-calc__desde-etiqueta {
 	font-size: 11.5px;
 	font-weight: 600;
 	letter-spacing: 0.18em;
@@ -109,19 +230,19 @@
 	color: var(--ncm-suave);
 }
 
-.ncm-calc__desde-monto {
+.ncm-calc .ncm-calc__desde-monto {
 	font-size: clamp(26px, 5vw, 34px);
 	font-weight: 700;
 	line-height: 1.15;
 	letter-spacing: -0.01em;
 }
 
-.ncm-calc__desde-detalle {
+.ncm-calc .ncm-calc__desde-detalle {
 	font-size: 13px;
 	color: var(--ncm-suave);
 }
 
-.ncm-calc__nota-intro {
+.ncm-calc .ncm-calc__nota-intro {
 	margin: 0;
 	font-size: 12.5px;
 	line-height: 1.6;
@@ -130,14 +251,14 @@
 
 /* ---------- Formulario y progreso ---------- */
 
-.ncm-calc__form {
+.ncm-calc .ncm-calc__form {
 	margin: 0;
 	padding: 0;
 	border: 0;
 	background: none;
 }
 
-.ncm-calc__progreso {
+.ncm-calc .ncm-calc__progreso {
 	height: 3px;
 	margin-bottom: 20px;
 	border-radius: 999px;
@@ -145,7 +266,7 @@
 	overflow: hidden;
 }
 
-.ncm-calc__progreso-barra {
+.ncm-calc .ncm-calc__progreso-barra {
 	display: block;
 	width: 0;
 	height: 100%;
@@ -154,7 +275,7 @@
 	transition: width var(--ncm-transicion);
 }
 
-.ncm-calc__pasos {
+.ncm-calc .ncm-calc__pasos {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
@@ -162,25 +283,25 @@
 
 /* ---------- Paso (acordeón) ---------- */
 
-.ncm-paso {
+.ncm-calc .ncm-paso {
 	border: 1px solid var(--ncm-linea);
 	border-radius: var(--ncm-radio);
 	background: var(--ncm-fondo);
 	transition: border-color var(--ncm-transicion), box-shadow var(--ncm-transicion);
 }
 
-.ncm-paso--activo {
+.ncm-calc .ncm-paso--activo {
 	border-color: var(--ncm-linea-fuerte);
 	box-shadow: var(--ncm-sombra);
 }
 
-.ncm-paso__cabecera {
+.ncm-calc .ncm-paso__cabecera {
 	margin: 0;
 	font-size: inherit;
 	font-weight: inherit;
 }
 
-.ncm-paso__boton {
+.ncm-calc .ncm-paso__boton {
 	display: flex;
 	align-items: center;
 	gap: 14px;
@@ -195,12 +316,12 @@
 	cursor: pointer;
 }
 
-.ncm-paso__boton:focus-visible {
+.ncm-calc .ncm-paso__boton:focus-visible {
 	outline: 2px solid var(--ncm-acento);
 	outline-offset: -2px;
 }
 
-.ncm-paso__numero {
+.ncm-calc .ncm-paso__numero {
 	display: flex;
 	flex: 0 0 auto;
 	align-items: center;
@@ -215,52 +336,52 @@
 	transition: all var(--ncm-transicion);
 }
 
-.ncm-paso--activo .ncm-paso__numero {
+.ncm-calc .ncm-paso--activo .ncm-paso__numero {
 	border-color: var(--ncm-acento);
 	background: var(--ncm-acento);
 	color: #fff;
 }
 
-.ncm-paso--completo:not(.ncm-paso--activo) .ncm-paso__numero {
+.ncm-calc .ncm-paso--completo:not(.ncm-paso--activo) .ncm-paso__numero {
 	border-color: var(--ncm-acento);
 	background: var(--ncm-acento-claro);
 	color: var(--ncm-acento-oscuro);
 }
 
 /* La palomita sustituye al número en los pasos ya resueltos. */
-.ncm-paso--completo:not(.ncm-paso--activo) .ncm-paso__numero {
+.ncm-calc .ncm-paso--completo:not(.ncm-paso--activo) .ncm-paso__numero {
 	font-size: 0;
 }
 
-.ncm-paso--completo:not(.ncm-paso--activo) .ncm-paso__numero::after {
+.ncm-calc .ncm-paso--completo:not(.ncm-paso--activo) .ncm-paso__numero::after {
 	content: "✓";
 	font-size: 14px;
 	line-height: 1;
 }
 
-.ncm-paso__textos {
+.ncm-calc .ncm-paso__textos {
 	display: flex;
 	flex: 1 1 auto;
 	flex-direction: column;
 	min-width: 0;
 }
 
-.ncm-paso__titulo {
+.ncm-calc .ncm-paso__titulo {
 	font-size: 15px;
 	font-weight: 600;
 	letter-spacing: -0.01em;
 }
 
-.ncm-paso__ayuda {
+.ncm-calc .ncm-paso__ayuda {
 	font-size: 13px;
 	color: var(--ncm-tenue);
 }
 
-.ncm-paso--activo .ncm-paso__ayuda {
+.ncm-calc .ncm-paso--activo .ncm-paso__ayuda {
 	color: var(--ncm-suave);
 }
 
-.ncm-paso__elegido {
+.ncm-calc .ncm-paso__elegido {
 	flex: 0 1 auto;
 	max-width: 45%;
 	overflow: hidden;
@@ -272,22 +393,22 @@
 	white-space: nowrap;
 }
 
-.ncm-paso--activo .ncm-paso__elegido {
+.ncm-calc .ncm-paso--activo .ncm-paso__elegido {
 	display: none;
 }
 
-.ncm-paso__cuerpo {
+.ncm-calc .ncm-paso__cuerpo {
 	padding: 0 18px 18px;
 }
 
 /* Con JavaScript los pasos se abren de a uno; sin él, todos quedan visibles. */
-.ncm-calc--con-js .ncm-paso:not(.ncm-paso--activo) .ncm-paso__cuerpo {
+.ncm-calc.ncm-calc--con-js .ncm-paso:not(.ncm-paso--activo) .ncm-paso__cuerpo {
 	display: none;
 }
 
 /* ---------- Rejilla de opciones ---------- */
 
-.ncm-opciones {
+.ncm-calc .ncm-opciones {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
 	gap: 12px;
@@ -297,12 +418,12 @@
 	min-width: 0;
 }
 
-.ncm-paso--compacto .ncm-opciones {
+.ncm-calc .ncm-paso--compacto .ncm-opciones {
 	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 	max-width: 480px;
 }
 
-.ncm-opciones__vacio {
+.ncm-calc .ncm-opciones__vacio {
 	grid-column: 1 / -1;
 	margin: 0;
 	padding: 18px;
@@ -315,14 +436,14 @@
 
 /* ---------- Tarjeta de opción ---------- */
 
-.ncm-opcion {
+.ncm-calc .ncm-opcion {
 	position: relative;
 	display: block;
 	margin: 0;
 	cursor: pointer;
 }
 
-.ncm-opcion__radio {
+.ncm-calc .ncm-opcion__radio {
 	position: absolute;
 	width: 1px;
 	height: 1px;
@@ -332,7 +453,7 @@
 	pointer-events: none;
 }
 
-.ncm-opcion__cuerpo {
+.ncm-calc .ncm-opcion__cuerpo {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
@@ -345,24 +466,24 @@
 		box-shadow var(--ncm-transicion), background-color var(--ncm-transicion);
 }
 
-.ncm-opcion:hover .ncm-opcion__cuerpo {
+.ncm-calc .ncm-opcion:hover .ncm-opcion__cuerpo {
 	border-color: var(--ncm-linea-fuerte);
 	transform: translateY(-2px);
 	box-shadow: var(--ncm-sombra);
 }
 
-.ncm-opcion__radio:focus-visible + .ncm-opcion__cuerpo {
+.ncm-calc .ncm-opcion__radio:focus-visible + .ncm-opcion__cuerpo {
 	outline: 2px solid var(--ncm-acento);
 	outline-offset: 2px;
 }
 
-.ncm-opcion__radio:checked + .ncm-opcion__cuerpo {
+.ncm-calc .ncm-opcion__radio:checked + .ncm-opcion__cuerpo {
 	border-color: var(--ncm-acento);
 	background: var(--ncm-acento-claro);
 	box-shadow: var(--ncm-sombra-activa);
 }
 
-.ncm-opcion__media {
+.ncm-calc .ncm-opcion__media {
 	position: relative;
 	display: flex;
 	align-items: center;
@@ -373,7 +494,7 @@
 	overflow: hidden;
 }
 
-.ncm-opcion__img {
+.ncm-calc .ncm-opcion__img {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
@@ -381,23 +502,23 @@
 	transition: transform 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-.ncm-opcion:hover .ncm-opcion__img {
+.ncm-calc .ncm-opcion:hover .ncm-opcion__img {
 	transform: scale(1.05);
 }
 
-.ncm-opcion__monograma {
+.ncm-calc .ncm-opcion__monograma {
 	font-size: 26px;
 	font-weight: 300;
 	letter-spacing: 0.04em;
 	color: var(--ncm-tenue);
 }
 
-.ncm-opcion__radio:checked + .ncm-opcion__cuerpo .ncm-opcion__monograma {
+.ncm-calc .ncm-opcion__radio:checked + .ncm-opcion__cuerpo .ncm-opcion__monograma {
 	color: var(--ncm-acento);
 }
 
 /* Palomita sobre la imagen de la opción elegida. */
-.ncm-opcion__marca {
+.ncm-calc .ncm-opcion__marca {
 	position: absolute;
 	top: 6px;
 	right: 6px;
@@ -414,18 +535,18 @@
 	transition: opacity var(--ncm-transicion), transform var(--ncm-transicion);
 }
 
-.ncm-opcion__marca::after {
+.ncm-calc .ncm-opcion__marca::after {
 	content: "✓";
 	font-size: 12px;
 	line-height: 1;
 }
 
-.ncm-opcion__radio:checked + .ncm-opcion__cuerpo .ncm-opcion__marca {
+.ncm-calc .ncm-opcion__radio:checked + .ncm-opcion__cuerpo .ncm-opcion__marca {
 	opacity: 1;
 	transform: scale(1);
 }
 
-.ncm-opcion__nombre {
+.ncm-calc .ncm-opcion__nombre {
 	padding: 0 2px 2px;
 	font-size: 13.5px;
 	font-weight: 500;
@@ -434,23 +555,23 @@
 }
 
 /* La variante compacta (origen) no lleva imagen: es un par de pastillas. */
-.ncm-paso--compacto .ncm-opcion__media {
+.ncm-calc .ncm-paso--compacto .ncm-opcion__media {
 	display: none;
 }
 
-.ncm-paso--compacto .ncm-opcion__cuerpo {
+.ncm-calc .ncm-paso--compacto .ncm-opcion__cuerpo {
 	padding: 14px 16px;
 	border-radius: 999px;
 }
 
-.ncm-paso--compacto .ncm-opcion__nombre {
+.ncm-calc .ncm-paso--compacto .ncm-opcion__nombre {
 	font-size: 15px;
 	padding: 0;
 }
 
 /* ---------- Barra de resumen ---------- */
 
-.ncm-calc__barra {
+.ncm-calc .ncm-calc__barra {
 	position: sticky;
 	bottom: 0;
 	z-index: 5;
@@ -468,7 +589,7 @@
 	box-shadow: var(--ncm-sombra);
 }
 
-.ncm-calc__resumen {
+.ncm-calc .ncm-calc__resumen {
 	display: flex;
 	flex: 1 1 220px;
 	flex-wrap: wrap;
@@ -476,12 +597,12 @@
 	min-width: 0;
 }
 
-.ncm-calc__resumen-vacio {
+.ncm-calc .ncm-calc__resumen-vacio {
 	font-size: 13.5px;
 	color: var(--ncm-tenue);
 }
 
-.ncm-chip {
+.ncm-calc .ncm-chip {
 	padding: 4px 11px;
 	border: 1px solid var(--ncm-linea);
 	border-radius: 999px;
@@ -494,21 +615,21 @@
 	transition: all var(--ncm-transicion);
 }
 
-.ncm-chip:hover,
-.ncm-chip:focus-visible {
+.ncm-calc .ncm-chip:hover,
+.ncm-calc .ncm-chip:focus-visible {
 	border-color: var(--ncm-acento);
 	background: var(--ncm-acento-claro);
 	color: var(--ncm-acento-oscuro);
 }
 
-.ncm-calc__acciones {
+.ncm-calc .ncm-calc__acciones {
 	display: flex;
 	flex: 0 0 auto;
 	flex-wrap: wrap;
 	gap: 8px;
 }
 
-.ncm-calc__boton {
+.ncm-calc .ncm-calc__boton {
 	padding: 11px 22px;
 	border: 1px solid var(--ncm-acento);
 	border-radius: 999px;
@@ -522,31 +643,31 @@
 	transition: all var(--ncm-transicion);
 }
 
-.ncm-calc__boton:hover:not([disabled]),
-.ncm-calc__boton:focus-visible:not([disabled]) {
+.ncm-calc .ncm-calc__boton:hover:not([disabled]),
+.ncm-calc .ncm-calc__boton:focus-visible:not([disabled]) {
 	filter: brightness(0.9);
 	transform: translateY(-1px);
 }
 
-.ncm-calc__boton[disabled] {
+.ncm-calc .ncm-calc__boton[disabled] {
 	opacity: 0.45;
 	cursor: not-allowed;
 }
 
-.ncm-calc__boton--sec {
+.ncm-calc .ncm-calc__boton--sec {
 	background: transparent;
 	border-color: var(--ncm-linea-fuerte);
 	color: var(--ncm-suave);
 }
 
-.ncm-calc__boton--sec:hover:not([disabled]),
-.ncm-calc__boton--sec:focus-visible:not([disabled]) {
+.ncm-calc .ncm-calc__boton--sec:hover:not([disabled]),
+.ncm-calc .ncm-calc__boton--sec:focus-visible:not([disabled]) {
 	background: var(--ncm-fondo-alt);
 	border-color: var(--ncm-acento);
 	color: var(--ncm-acento-oscuro);
 }
 
-.ncm-calc__aviso {
+.ncm-calc .ncm-calc__aviso {
 	display: none;
 	margin: 14px 0 0;
 	padding: 10px 14px;
@@ -556,11 +677,11 @@
 	font-size: 14px;
 }
 
-.ncm-calc__aviso--visible {
+.ncm-calc .ncm-calc__aviso--visible {
 	display: block;
 }
 
-.ncm-calc__whatsapp {
+.ncm-calc .ncm-calc__whatsapp {
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
@@ -570,19 +691,19 @@
 	text-decoration: none;
 }
 
-.ncm-calc__whatsapp:hover,
-.ncm-calc__whatsapp:focus-visible {
+.ncm-calc .ncm-calc__whatsapp:hover,
+.ncm-calc .ncm-calc__whatsapp:focus-visible {
 	border-color: var(--ncm-whatsapp-oscuro);
 	background: var(--ncm-whatsapp-oscuro);
 	color: #fff;
 	text-decoration: none;
 }
 
-.ncm-calc__whatsapp-icono {
+.ncm-calc .ncm-calc__whatsapp-icono {
 	flex: 0 0 auto;
 }
 
-.ncm-res__acciones {
+.ncm-calc .ncm-res__acciones {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 10px;
@@ -591,15 +712,15 @@
 
 /* ---------- Resultado ---------- */
 
-.ncm-calc__resultado:empty {
+.ncm-calc .ncm-calc__resultado:empty {
 	display: none;
 }
 
-.ncm-calc--cargando .ncm-calc__resultado {
+.ncm-calc.ncm-calc--cargando .ncm-calc__resultado {
 	opacity: 0.45;
 }
 
-.ncm-calc__resultado--nuevo .ncm-res {
+.ncm-calc .ncm-calc__resultado--nuevo .ncm-res {
 	animation: ncm-entrar 420ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
@@ -615,7 +736,7 @@
 	}
 }
 
-.ncm-res {
+.ncm-calc .ncm-res {
 	margin-top: 22px;
 	padding: 28px;
 	border: 1px solid var(--ncm-linea);
@@ -624,19 +745,19 @@
 	box-shadow: var(--ncm-sombra);
 }
 
-.ncm-res__precio {
+.ncm-calc .ncm-res__precio {
 	padding-bottom: 20px;
 	margin-bottom: 20px;
 	border-bottom: 1px solid var(--ncm-linea);
 	text-align: center;
 }
 
-.ncm-res--publico .ncm-res__precio {
+.ncm-calc .ncm-res--publico .ncm-res__precio {
 	padding-bottom: 14px;
 	margin-bottom: 14px;
 }
 
-.ncm-res__desde {
+.ncm-calc .ncm-res__desde {
 	display: block;
 	font-size: 11.5px;
 	font-weight: 600;
@@ -644,7 +765,7 @@
 	color: var(--ncm-suave);
 }
 
-.ncm-res__monto {
+.ncm-calc .ncm-res__monto {
 	display: block;
 	margin-top: 6px;
 	font-size: clamp(28px, 6vw, 38px);
@@ -653,28 +774,28 @@
 	letter-spacing: -0.02em;
 }
 
-.ncm-res__codigo {
+.ncm-calc .ncm-res__codigo {
 	margin: -12px 0 22px;
 	text-align: center;
 	font-size: 12.5px;
 	color: var(--ncm-tenue);
 }
 
-.ncm-res__resumen {
+.ncm-calc .ncm-res__resumen {
 	margin: 0 0 14px;
 	text-align: center;
 	font-size: 14px;
 	color: var(--ncm-suave);
 }
 
-.ncm-res__tabla {
+.ncm-calc .ncm-res__tabla {
 	width: 100%;
 	margin: 0 0 24px;
 	border-collapse: collapse;
 	font-size: 14px;
 }
 
-.ncm-res__tabla caption {
+.ncm-calc .ncm-res__tabla caption {
 	padding-bottom: 10px;
 	font-size: 11px;
 	font-weight: 700;
@@ -684,35 +805,35 @@
 	color: var(--ncm-suave);
 }
 
-.ncm-res__tabla th,
-.ncm-res__tabla td {
+.ncm-calc .ncm-res__tabla th,
+.ncm-calc .ncm-res__tabla td {
 	padding: 9px 0;
 	border-bottom: 1px solid var(--ncm-linea);
 	text-align: left;
 	vertical-align: top;
 }
 
-.ncm-res__tabla th {
+.ncm-calc .ncm-res__tabla th {
 	width: 44%;
 	font-weight: 500;
 }
 
-.ncm-res__tabla td {
+.ncm-calc .ncm-res__tabla td {
 	text-align: right;
 }
 
-.ncm-res__formula {
+.ncm-calc .ncm-res__formula {
 	display: block;
 	color: var(--ncm-tenue);
 	font-size: 12px;
 }
 
-.ncm-res__valor {
+.ncm-calc .ncm-res__valor {
 	display: block;
 	font-variant-numeric: tabular-nums;
 }
 
-.ncm-res__seccion th {
+.ncm-calc .ncm-res__seccion th {
 	width: auto;
 	padding-top: 20px;
 	border-bottom: 1px solid var(--ncm-linea-fuerte);
@@ -723,32 +844,32 @@
 	color: var(--ncm-acento);
 }
 
-.ncm-res__tabla--desglose tr:first-child th {
+.ncm-calc .ncm-res__tabla--desglose tr:first-child th {
 	padding-top: 0;
 }
 
-.ncm-res__fila--total th,
-.ncm-res__fila--total td {
+.ncm-calc .ncm-res__fila--total th,
+.ncm-calc .ncm-res__fila--total td {
 	font-weight: 700;
 	border-bottom-color: var(--ncm-linea-fuerte);
 }
 
-.ncm-res__fila--gran_total th,
-.ncm-res__fila--gran_total td {
+.ncm-calc .ncm-res__fila--gran_total th,
+.ncm-calc .ncm-res__fila--gran_total td {
 	padding-top: 14px;
 	border-bottom: none;
 	font-size: 17px;
 	font-weight: 700;
 }
 
-.ncm-res__nota-inline {
+.ncm-calc .ncm-res__nota-inline {
 	display: block;
 	font-size: 12px;
 	font-weight: 400;
 	color: var(--ncm-tenue);
 }
 
-.ncm-res__nota {
+.ncm-calc .ncm-res__nota {
 	margin: 0 0 20px;
 	padding-top: 16px;
 	border-top: 1px solid var(--ncm-linea);
@@ -757,11 +878,11 @@
 	line-height: 1.6;
 }
 
-.ncm-res--error {
+.ncm-calc .ncm-res--error {
 	text-align: center;
 }
 
-.ncm-res__error {
+.ncm-calc .ncm-res__error {
 	margin: 0;
 	color: var(--ncm-error);
 	font-size: 18px;
@@ -769,7 +890,7 @@
 	letter-spacing: 0.04em;
 }
 
-.ncm-res__error-detalle {
+.ncm-calc .ncm-res__error-detalle {
 	margin: 8px 0 0;
 	color: var(--ncm-suave);
 	font-size: 13px;
@@ -777,11 +898,11 @@
 
 /* ---------- Membrete (solo al imprimir) ---------- */
 
-.ncm-solo-print {
+.ncm-calc .ncm-solo-print {
 	display: none;
 }
 
-.ncm-res__membrete {
+.ncm-calc .ncm-res__membrete {
 	align-items: flex-end;
 	justify-content: space-between;
 	padding-bottom: 10px;
@@ -789,70 +910,70 @@
 	border-bottom: 2px solid var(--ncm-tinta);
 }
 
-.ncm-res__marca {
+.ncm-calc .ncm-res__marca {
 	font-size: 26pt;
 	font-weight: 700;
 	letter-spacing: 0.22em;
 	line-height: 1;
 }
 
-.ncm-res__membrete-datos {
+.ncm-calc .ncm-res__membrete-datos {
 	text-align: right;
 	font-size: 9pt;
 	line-height: 1.5;
 	color: var(--ncm-suave);
 }
 
-.ncm-res__membrete-titulo {
+.ncm-calc .ncm-res__membrete-titulo {
 	display: block;
 	letter-spacing: 0.12em;
 	text-transform: uppercase;
 }
 
-.ncm-res__fecha {
+.ncm-calc .ncm-res__fecha {
 	display: block;
 }
 
 /* ---------- Pantallas pequeñas ---------- */
 
 @media (max-width: 600px) {
-	.ncm-opciones {
+	.ncm-calc .ncm-opciones {
 		grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
 		gap: 10px;
 	}
 
-	.ncm-paso__boton {
+	.ncm-calc .ncm-paso__boton {
 		padding: 14px;
 		gap: 11px;
 	}
 
-	.ncm-paso__cuerpo {
+	.ncm-calc .ncm-paso__cuerpo {
 		padding: 0 14px 14px;
 	}
 
-	.ncm-paso__elegido {
+	.ncm-calc .ncm-paso__elegido {
 		max-width: 38%;
 	}
 
-	.ncm-res {
+	.ncm-calc .ncm-res {
 		padding: 20px 16px;
 	}
 
-	.ncm-calc__barra {
+	.ncm-calc .ncm-calc__barra {
 		flex-direction: column;
 		align-items: stretch;
 	}
 
-	.ncm-calc__acciones .ncm-calc__boton {
+	.ncm-calc .ncm-calc__acciones .ncm-calc__boton {
 		flex: 1 1 auto;
 	}
 }
 
 /* Quien pidió menos movimiento, menos movimiento. */
 @media (prefers-reduced-motion: reduce) {
-	.ncm-calc *,
-	.ncm-calc *::before,
-	.ncm-calc *::after {
+	.ncm-calc.ncm-calc *,
+	.ncm-calc.ncm-calc *::before,
+	.ncm-calc.ncm-calc *::after {
 		animation-duration: 0.01ms !important;
 		animation-iteration-count: 1 !important;
 		transition-duration: 0.01ms !important;

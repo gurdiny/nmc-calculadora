@@ -194,8 +194,11 @@ class NCM_Shortcode {
 			$colores = $paletas[ $clave ];
 		}
 
+		// La clase va duplicada a propósito: la hoja del front define los valores
+		// por defecto en `.ncm-calc.ncm-calc` para ganarle al reset del tema, así
+		// que la paleta necesita esa misma especificidad para pisarlos.
 		return sprintf(
-			'.ncm-calc{--ncm-tinta:%1$s;--ncm-suave:%2$s;--ncm-tenue:%3$s;--ncm-linea:%4$s;' .
+			'.ncm-calc.ncm-calc{--ncm-tinta:%1$s;--ncm-suave:%2$s;--ncm-tenue:%3$s;--ncm-linea:%4$s;' .
 			'--ncm-linea-fuerte:%5$s;--ncm-fondo:%6$s;--ncm-fondo-alt:%7$s;--ncm-acento:%8$s;' .
 			'--ncm-acento-claro:%9$s;--ncm-sobre-acento:%10$s;--ncm-velo:%11$s;}',
 			$colores['tinta'],

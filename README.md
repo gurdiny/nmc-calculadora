@@ -22,8 +22,10 @@ Ver [Seguridad](#seguridad).
 
 ## Instalación
 
-1. Copiar la carpeta `ncm-calculadora/` dentro de `wp-content/plugins/`
-   (o comprimirla en un `.zip` y subirla desde **Plugins → Añadir nuevo → Subir**).
+1. Generar el `.zip` con `bash bin/empaquetar.sh` y subirlo desde
+   **Plugins → Añadir nuevo → Subir**. A mano: copiar el contenido de este
+   repositorio en `wp-content/plugins/ncm-calculadora/` (la carpeta debe
+   llamarse así).
 2. Activar **Calculadora de Joyas NCM**.
 3. Crear las páginas con los shortcodes:
 
@@ -489,8 +491,10 @@ ncm-calculadora/
 └── README.md
 ```
 
-En la raíz del repositorio, fuera del plugin: `bin/empaquetar.sh` (genera el
-`.zip`), `CLAUDE.md` y `FASES_Calculadora_NCM_WordPress.md`.
+La raíz del repositorio es el plugin: lo que se ve arriba es lo que se copia a
+`wp-content/plugins/ncm-calculadora/`. Las notas de trabajo (`CLAUDE.md`,
+`FASES_Calculadora_NCM_WordPress.md`, `PENDIENTES.md`) y el empaquetador
+`bin/empaquetar.sh` viven en local y están fuera del control de versiones.
 
 `NCM_Calculator` no llama a ninguna función de WordPress ni conoce ningún número
 del Excel: recibe la configuración ya normalizada, por eso se puede ejecutar y

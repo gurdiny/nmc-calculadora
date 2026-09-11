@@ -1,5 +1,13 @@
+# Notas de trabajo y planificación: no forman parte del plugin.
+/CLAUDE.md
+/FASES_Calculadora_NCM_WordPress.md
+/PENDIENTES.md
+
+# Utilidades locales de empaquetado.
+/bin/
+
 # Dependencias de desarrollo (PHPUnit y compañía): se reinstalan con composer.
-/ncm-calculadora/vendor/
+/vendor/
 
 # Paquetes generados por bin/empaquetar.sh.
 /dist/
@@ -11,7 +19,7 @@
 node_modules/
 
 # Configuración local del entorno de wp-env.
-/ncm-calculadora/.wp-env.json
+/.wp-env.json
 
 # Basura de sistema y editores.
 .DS_Store

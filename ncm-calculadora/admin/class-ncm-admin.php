@@ -144,7 +144,7 @@ class NCM_Admin {
 			<h2 class="nav-tab-wrapper">
 				<?php foreach ( self::pestanas() as $slug => $etiqueta ) : ?>
 					<a href="<?php echo esc_url( self::url_pestana( $slug ) ); ?>"
-						class="nav-tab <?php echo $slug === $tab ? 'nav-tab-active' : ''; ?>">
+						class="nav-tab <?php echo esc_attr( $slug === $tab ? 'nav-tab-active' : '' ); ?>">
 						<?php echo esc_html( $etiqueta ); ?>
 					</a>
 				<?php endforeach; ?>
@@ -455,14 +455,14 @@ class NCM_Admin {
 				value="<?php echo esc_attr( $id ? $id : '' ); ?>">
 
 			<button type="button" class="ncm-imagen__boton" aria-label="Elegir imagen">
-				<img class="ncm-imagen__vista <?php echo $src ? '' : 'ncm-imagen__vista--vacia'; ?>"
+				<img class="ncm-imagen__vista <?php echo esc_attr( $src ? '' : 'ncm-imagen__vista--vacia' ); ?>"
 					src="<?php echo esc_url( $src ); ?>" alt="" <?php echo $src ? '' : 'hidden'; ?>>
-				<span class="ncm-imagen__placeholder" <?php echo $src ? 'hidden' : ''; ?>>
+				<span class="ncm-imagen__placeholder" <?php echo $src ? 'hidden' : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- atributo booleano literal. ?>>
 					<span class="dashicons dashicons-format-image"></span>
 				</span>
 			</button>
 
-			<button type="button" class="button-link ncm-imagen__quitar" <?php echo $src ? '' : 'hidden'; ?>>Quitar</button>
+			<button type="button" class="button-link ncm-imagen__quitar" <?php echo $src ? '' : 'hidden'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- atributo booleano literal. ?>>Quitar</button>
 
 			<?php if ( '' !== $problema ) : ?>
 				<span class="ncm-imagen__problema" title="<?php echo esc_attr( $problema ); ?>">⚠ no se verá</span>

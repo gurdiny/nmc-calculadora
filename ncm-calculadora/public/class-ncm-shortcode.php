@@ -396,7 +396,7 @@ class NCM_Shortcode {
 		<section class="<?php echo esc_attr( $clases ); ?>" data-paso="<?php echo esc_attr( $clave ); ?>">
 			<h3 class="ncm-paso__cabecera">
 				<button type="button" class="ncm-paso__boton" data-abrir-paso
-					aria-expanded="<?php echo 1 === $numero ? 'true' : 'false'; ?>">
+					aria-expanded="<?php echo esc_attr( 1 === $numero ? 'true' : 'false' ); ?>">
 					<span class="ncm-paso__numero"><?php echo esc_html( $numero ); ?></span>
 					<span class="ncm-paso__textos">
 						<span class="ncm-paso__titulo"><?php echo esc_html( $titulo ); ?></span>
@@ -438,7 +438,7 @@ class NCM_Shortcode {
 		$datos  = isset( $opcion['datos'] ) ? $opcion['datos'] : array();
 		$oculto = ! empty( $opcion['oculto'] );
 		?>
-		<label class="ncm-opcion" <?php echo $oculto ? 'hidden' : ''; ?>
+		<label class="ncm-opcion" <?php echo $oculto ? 'hidden' : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- atributo booleano literal. ?>
 			<?php foreach ( $datos as $atributo => $contenido ) : ?>
 				data-<?php echo esc_attr( $atributo ); ?>="<?php echo esc_attr( $contenido ); ?>"
 			<?php endforeach; ?>>

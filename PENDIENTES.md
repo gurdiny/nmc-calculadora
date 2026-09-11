@@ -135,3 +135,24 @@ sensible; autor, colaborador, editor y administrador reciben el desglose.
 
 **Si alguna vez hace falta restringir más:** `edit_others_posts` (solo editores) o
 `manage_options` (solo administradores). No bajarla a `read`.
+
+---
+
+## 8. Restos de la auditoría de seguridad v1.2.0
+
+**Estado:** los hallazgos accionables se cerraron en la v1.2.1 (capacidad
+`edit_posts`, text domain, licencia GPLv2, `uninstall.php`, autoload desactivado,
+validación de adjuntos, `index.php` de silencio). Queda anotado lo que **no** se
+hizo y por qué:
+
+- **Sin límite de tasa en el endpoint público.** El nonce anónimo es el mismo
+  para todos los visitantes (es scrapeable del HTML), así que no frena a un bot:
+  cualquiera puede recorrer las ~3.000 combinaciones y reconstruir la tabla de
+  precios. No filtra costos ni margen, pero sí es información comercial. Es
+  consecuencia de publicar la calculadora; si molesta, un límite por IP con
+  transients lo frena.
+- **Sin archivo con el texto completo de la GPLv2.** La cabecera declara la
+  licencia y apunta a `License URI`. Si alguna vez se distribuye públicamente,
+  conviene añadir el `LICENSE` con el texto íntegro.
+- **Sin `readme.txt`** en el formato del directorio de WordPress.org. Solo
+  importa si se sube al directorio; para un plugin privado, el `README.md` basta.

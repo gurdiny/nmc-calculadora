@@ -503,6 +503,19 @@ Si en tu instalación quien cotiza tiene otro rol, cambia la constante
 (solo editores) o `manage_options` (solo administradores) la restringen más.
 **No la bajes a `read`.**
 
+### Otras medidas
+
+- **Desinstalación limpia:** `uninstall.php` borra `ncm_calc_config` al eliminar
+  el plugin, para no dejar precios y márgenes huérfanos en la base de datos.
+  Desactivar no borra nada. Las imágenes asignadas no se tocan: son adjuntos de
+  la mediateca.
+- **Adjuntos validados al mostrar:** una imagen que no exista, que no sea imagen
+  o cuya entrada padre esté en borrador o sea privada **no se publica**; la
+  tarjeta cae en su monograma. El panel avisa con «⚠ no se verá».
+- **La opción no se autocarga:** ronda los 6 KB y solo hace falta en el panel y
+  en las páginas con shortcode.
+- `index.php` de silencio en cada directorio.
+
 Además:
 
 - El shortcode interno exige `is_user_logged_in()` y la capacidad `edit_posts`;

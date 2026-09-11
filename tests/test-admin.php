@@ -600,6 +600,29 @@ ncm_check( 'orígenes', array( 'Natural', 'Laboratorio' ), $cat['origenes'] );
 ncm_check( 'tallas disponibles', 5, count( $cat['tallas'] ) );
 ncm_check( 'metales disponibles', 5, count( $cat['metales'] ) );
 
+echo "\n== El filtrado de opciones del front no depende del tema ==\n";
+
+/*
+ * El front descarta con el atributo `hidden` los diseños que no son del tipo
+ * elegido. Si una regla de componente le gana en especificidad al
+ * `[hidden]{display:none}`, los diseños de otros tipos vuelven a verse y el
+ * visitante puede armar combinaciones que no existen en la matriz (y llega a
+ * REVISAR CONFIGURACIÓN). Ya pasó una vez, así que se vigila.
+ */
+$css = file_get_contents( __DIR__ . '/../assets/css/ncm-calculadora.css' );
+
+ncm_check(
+	'el CSS fuerza [hidden] con !important',
+	1,
+	preg_match( '/\.ncm-calc \[hidden\]\s*\{[^}]*display:\s*none\s*!important/', $css )
+);
+
+ncm_check(
+	'y el JS sigue marcando hidden al filtrar',
+	1,
+	preg_match( '/opcion\.hidden\s*=/', file_get_contents( __DIR__ . '/../assets/js/ncm-calculadora.js' ) )
+);
+
 echo "\n----------------------------------------\n";
 
 if ( $fallos > 0 ) {

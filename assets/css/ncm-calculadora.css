@@ -60,6 +60,18 @@
  * después tienen al menos la misma especificidad y mandan sobre él.
  */
 
+/*
+ * `hidden` tiene que ganar siempre. El front lo usa para descartar opciones que
+ * no aplican —los diseños de otro tipo de joya, sobre todo—, y una regla de
+ * componente como `.ncm-calc .ncm-opcion{display:block}` le gana por
+ * especificidad al `[hidden]{display:none}` del navegador. Sin este
+ * `!important` volverían a verse diseños que no corresponden y se podrían
+ * elegir combinaciones que no existen en la matriz.
+ */
+.ncm-calc [hidden] {
+	display: none !important;
+}
+
 .ncm-calc button,
 .ncm-calc [type="button"],
 .ncm-calc [type="submit"],

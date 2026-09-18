@@ -142,3 +142,36 @@
 	color: #50575e;
 	vertical-align: middle;
 }
+
+/* ---------- Tipo de joya: desplegable + campo de respaldo ---------- */
+
+.ncm-tipo {
+	display: block;
+}
+
+.ncm-tipo__select {
+	width: 100%;
+	min-width: 120px;
+}
+
+/*
+ * El campo de texto es el que se envía. Normalmente va oculto detrás del
+ * desplegable, y solo asoma si la fila trae un tipo que no está en la lista
+ * (una errata heredada) o si no hay JavaScript.
+ */
+.ncm-tipo__select:not([hidden]) + .ncm-tipo__texto:not([hidden]) {
+	margin-top: 4px;
+}
+
+/* ---------- Añadir un tipo de joya ---------- */
+
+.ncm-tipo-nuevo {
+	display: inline-flex;
+	gap: 6px;
+	align-items: center;
+	vertical-align: middle;
+}
+
+.ncm-tipo-nuevo__campo {
+	max-width: 240px;
+}

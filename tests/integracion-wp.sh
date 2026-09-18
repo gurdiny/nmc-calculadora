@@ -205,13 +205,9 @@ comprobar "Anillo + Tennis -> REVISAR_CONFIGURACION" "REVISAR_CONFIGURACION" \
 	"$(python3 -c 'import json,sys;print(json.loads(sys.stdin.read())["data"]["estado"])' <<<"${REV}")"
 
 echo
-echo "== Impresión =="
-comprobar "el resultado interno trae el botón de imprimir" "sí" \
+echo "== Nota legal =="
+comprobar "ni rastro del botón de imprimir" "no" \
 	"$(grep -q 'ncm-calc__imprimir' <<<"${RESP}" && echo sí || echo no)"
-comprobar "el resultado público NO lo trae" "no" \
-	"$(grep -q 'ncm-calc__imprimir' <<<"${RESP_ANON}" && echo sí || echo no)"
-comprobar "y el membrete con la marca NCM" "sí" \
-	"$(grep -q 'ncm-res__membrete' <<<"${RESP}" && echo sí || echo no)"
 comprobar "con la nota legal" "sí" \
 	"$(python3 -c 'import json,sys;d=json.loads(sys.stdin.read())["data"];print("sí" if "Valor estimado para la configuración" in d["html"] else "no")' <<<"${RESP}")"
 

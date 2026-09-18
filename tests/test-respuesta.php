@@ -273,8 +273,8 @@ ncm_check( 'margen', 0.35, $interna['margen_comercial'] );
 ncm_check( 'valor del margen', 5000800.0, $interna['valor_margen'] );
 ncm_check( 'desglose con filas', 25, count( $interna['desglose'] ) );
 ncm_check( 'el HTML trae la tabla del desglose', true, false !== strpos( $interna['html'], 'Desglose detallado' ) );
-ncm_check( 'y el botón de imprimir', true, false !== strpos( $interna['html'], 'ncm-calc__imprimir' ) );
-ncm_check( 'y el membrete de la cotización', true, false !== strpos( $interna['html'], 'ncm-res__membrete' ) );
+ncm_check( 'sin botón de imprimir', false, false !== strpos( $interna['html'], 'ncm-calc__imprimir' ) );
+ncm_check( 'ni membrete de impresión', false, false !== strpos( $interna['html'], 'ncm-res__membrete' ) );
 
 foreach ( $claves_prohibidas as $clave ) {
 	ncm_check( "sí trae la clave «{$clave}»", true, array_key_exists( $clave, $interna ) );

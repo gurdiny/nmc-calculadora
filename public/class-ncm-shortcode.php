@@ -7,7 +7,7 @@
  * - `[ncm_calculadora]`      Pública. La usa cualquiera, con o sin sesión.
  *                            Devuelve únicamente el precio "DESDE $X COP".
  * - `[ncm_calculadora_interna]` Interna. Solo se pinta a usuarios con sesión y
- *                            muestra el desglose completo más imprimir/PDF.
+ *                            muestra el desglose completo.
  *
  * El filtrado NO depende del front: el servidor decide qué sale del endpoint
  * según `is_user_logged_in()`. A una petición anónima jamás se le envían
@@ -862,7 +862,7 @@ class NCM_Shortcode {
 				<p class="ncm-res__nota"><?php echo esc_html( $r['texto_nota'] ); ?></p>
 			<?php endif; ?>
 
-			<p class="ncm-res__acciones ncm-no-print">
+			<p class="ncm-res__acciones">
 				<?php self::boton_whatsapp( $r ); ?>
 			</p>
 		</div>
@@ -872,28 +872,17 @@ class NCM_Shortcode {
 	}
 
 	/**
-	 * HTML interno: desglose completo más el bloque de impresión.
+	 * HTML interno: desglose completo.
 	 *
 	 * @param array $r Resultado del motor.
 	 * @return string
 	 */
 	private static function html_resultado( $r ) {
 		$moneda = $r['moneda'];
-		$fecha  = function_exists( 'wp_date' )
-			? wp_date( 'j/m/Y, H:i' )
-			: date_i18n( 'j/m/Y, H:i' );
 
 		ob_start();
 		?>
 		<div class="ncm-res">
-			<div class="ncm-res__membrete ncm-solo-print">
-				<span class="ncm-res__marca">NCM</span>
-				<span class="ncm-res__membrete-datos">
-					<span class="ncm-res__membrete-titulo">Cotización interna</span>
-					<span class="ncm-res__fecha"><?php echo esc_html( $fecha ); ?></span>
-				</span>
-			</div>
-
 			<div class="ncm-res__precio">
 				<span class="ncm-res__desde">DESDE</span>
 				<strong class="ncm-res__monto"><?php echo esc_html( NCM_Calculator::formato_moneda( $r['precio_final'], $moneda ) ); ?></strong>
@@ -940,9 +929,8 @@ class NCM_Shortcode {
 				<p class="ncm-res__nota"><?php echo esc_html( $r['texto_nota'] ); ?></p>
 			<?php endif; ?>
 
-			<p class="ncm-res__acciones ncm-no-print">
+			<p class="ncm-res__acciones">
 				<?php self::boton_whatsapp( $r ); ?>
-				<button type="button" class="ncm-calc__boton ncm-calc__boton--sec ncm-calc__imprimir">Imprimir / Guardar PDF</button>
 			</p>
 		</div>
 		<?php

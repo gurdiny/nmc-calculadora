@@ -346,13 +346,6 @@
 			limpiar.addEventListener( 'click', reiniciar );
 		}
 
-		// El botón de imprimir llega con el HTML del resultado, así que se delega.
-		resultado.addEventListener( 'click', function ( evento ) {
-			if ( evento.target && evento.target.classList.contains( 'ncm-calc__imprimir' ) ) {
-				window.print();
-			}
-		} );
-
 		raiz.classList.add( 'ncm-calc--con-js' );
 		filtrarDisenos();
 		pintarEstado();

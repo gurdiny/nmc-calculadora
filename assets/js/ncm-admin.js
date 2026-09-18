@@ -25,6 +25,122 @@
 		} );
 	}
 
+	/* ------------------------------------------------------------------
+	 * Tipo de joya: desplegable sobre el campo de texto
+	 * ------------------------------------------------------------------ */
+
+	/**
+	 * Tipos que ya aparecen en algún desplegable, en orden.
+	 *
+	 * @return {Array} Lista de tipos.
+	 */
+	function tiposConocidos() {
+		var select = document.querySelector( '[data-ncm-tipo-select]' );
+		var fuera = [];
+
+		if ( ! select ) {
+			return fuera;
+		}
+
+		Array.prototype.forEach.call( select.options, function ( opcion ) {
+			if ( '' !== opcion.value ) {
+				fuera.push( opcion.value );
+			}
+		} );
+
+		return fuera;
+	}
+
+	/**
+	 * Pone el desplegable al mando y deja el campo de texto solo de respaldo.
+	 *
+	 * El texto es el que se envía, así que el desplegable lo que hace es
+	 * escribir en él. Si la fila trae un tipo que no está en la lista —una
+	 * errata heredada, por ejemplo— se deja el texto a la vista para poder
+	 * arreglarlo a mano.
+	 *
+	 * @param {HTMLElement} celda Contenedor [data-ncm-tipo].
+	 */
+	function prepararTipo( celda ) {
+		var select = celda.querySelector( '[data-ncm-tipo-select]' );
+		var texto = celda.querySelector( '[data-ncm-tipo-texto]' );
+
+		if ( ! select || ! texto || celda.hasAttribute( 'data-listo' ) ) {
+			return;
+		}
+
+		celda.setAttribute( 'data-listo', '1' );
+		select.hidden = false;
+
+		var conocido = '' === texto.value || tiposConocidos().indexOf( texto.value ) !== -1;
+
+		texto.hidden = conocido;
+		select.value = conocido ? texto.value : '';
+
+		select.addEventListener( 'change', function () {
+			texto.value = select.value;
+		} );
+	}
+
+	/** Prepara las celdas de tipo que aún no lo estén. */
+	function prepararTipos() {
+		Array.prototype.forEach.call(
+			document.querySelectorAll( '[data-ncm-tipo]' ),
+			prepararTipo
+		);
+	}
+
+	/**
+	 * Añade un tipo a todos los desplegables de la tabla.
+	 *
+	 * @param {string} nombre Tipo nuevo.
+	 * @return {boolean} Si se pudo añadir.
+	 */
+	function agregarTipo( nombre ) {
+		nombre = nombre.replace( /^\s+|\s+$/g, '' );
+
+		if ( '' === nombre ) {
+			return false;
+		}
+
+		// Comparación sin distinguir mayúsculas: "Collar" y "collar" son el mismo
+		// tipo, y tenerlos por separado parte el catálogo en dos.
+		var existe = false;
+
+		tiposConocidos().forEach( function ( tipo ) {
+			if ( tipo.toLowerCase() === nombre.toLowerCase() ) {
+				existe = true;
+			}
+		} );
+
+		if ( existe ) {
+			return false;
+		}
+
+		Array.prototype.forEach.call(
+			document.querySelectorAll( '[data-ncm-tipo-select]' ),
+			function ( select ) {
+				var opcion = document.createElement( 'option' );
+
+				opcion.value = nombre;
+				opcion.textContent = nombre;
+				select.appendChild( opcion );
+			}
+		);
+
+		// La plantilla de fila nueva también, para que nazca con el tipo dentro.
+		var plantilla = document.getElementById( 'ncm-plantilla-disenos' );
+
+		if ( plantilla && plantilla.innerHTML.indexOf( 'data-ncm-tipo-select' ) !== -1 ) {
+			plantilla.innerHTML = plantilla.innerHTML.replace(
+				'</select>',
+				'<option value="' + nombre.replace( /"/g, '&quot;' ) + '">' + nombre + '</option></select>'
+			);
+		}
+
+		return true;
+	}
+
 	var textos = window.ncmAdminData || {};
 
 	/**
@@ -96,6 +212,32 @@
 			return;
 		}
 
+		if ( destino.classList.contains( 'ncm-agregar-tipo' ) ) {
+			evento.preventDefault();
+
+			var caja = destino.parentNode.querySelector( '.ncm-tipo-nuevo' );
+
+			destino.hidden = true;
+			caja.hidden = false;
+			caja.querySelector( '.ncm-tipo-nuevo__campo' ).focus();
+
+			return;
+		}
+
+		if ( destino.classList.contains( 'ncm-tipo-nuevo__confirmar' ) ) {
+			evento.preventDefault();
+			confirmarTipoNuevo( destino.closest( '.ncm-tipo-nuevo' ) );
+
+			return;
+		}
+
+		if ( destino.classList.contains( 'ncm-tipo-nuevo__cancelar' ) ) {
+			evento.preventDefault();
+			cerrarTipoNuevo( destino.closest( '.ncm-tipo-nuevo' ) );
+
+			return;
+		}
+
 		if ( destino.classList.contains( 'ncm-agregar-fila' ) ) {
 			evento.preventDefault();
 
@@ -112,6 +254,7 @@
 
 			cuerpo.insertAdjacentHTML( 'beforeend', html );
 			reindexar( tabla );
+			prepararTipos();
 
 			var nueva = cuerpo.rows[ cuerpo.rows.length - 1 ];
 			var primero = nueva ? nueva.querySelector( 'input' ) : null;
@@ -170,4 +313,84 @@
 			}
 		}
 	} );
+
+	/**
+	 * Cierra la cajita de tipo nuevo y devuelve el botón a su sitio.
+	 *
+	 * @param {HTMLElement} caja Contenedor .ncm-tipo-nuevo.
+	 */
+	function cerrarTipoNuevo( caja ) {
+		if ( ! caja ) {
+			return;
+		}
+
+		var campo = caja.querySelector( '.ncm-tipo-nuevo__campo' );
+		var boton = caja.parentNode.querySelector( '.ncm-agregar-tipo' );
+
+		campo.value = '';
+		campo.setCustomValidity( '' );
+		caja.hidden = true;
+
+		if ( boton ) {
+			boton.hidden = false;
+			boton.focus();
+		}
+	}
+
+	/**
+	 * Toma el nombre escrito y lo añade a los desplegables.
+	 *
+	 * @param {HTMLElement} caja Contenedor .ncm-tipo-nuevo.
+	 */
+	function confirmarTipoNuevo( caja ) {
+		if ( ! caja ) {
+			return;
+		}
+
+		var campo = caja.querySelector( '.ncm-tipo-nuevo__campo' );
+
+		if ( agregarTipo( campo.value ) ) {
+			cerrarTipoNuevo( caja );
+
+			return;
+		}
+
+		// Vacío o repetido: se avisa sin perder lo escrito.
+		campo.setCustomValidity(
+			'' === campo.value.replace( /^\s+|\s+$/g, '' )
+				? 'Escribe el nombre del tipo.'
+				: 'Ese tipo de joya ya existe.'
+		);
+		campo.reportValidity();
+	}
+
+	// Enter dentro del campo añade el tipo; Escape cierra. Sin esto, Enter
+	// enviaría el formulario entero del panel.
+	document.addEventListener( 'keydown', function ( evento ) {
+		var campo = evento.target;
+
+		if ( ! campo.classList || ! campo.classList.contains( 'ncm-tipo-nuevo__campo' ) ) {
+			return;
+		}
+
+		if ( 'Enter' === evento.key ) {
+			evento.preventDefault();
+			confirmarTipoNuevo( campo.closest( '.ncm-tipo-nuevo' ) );
+		} else if ( 'Escape' === evento.key ) {
+			evento.preventDefault();
+			cerrarTipoNuevo( campo.closest( '.ncm-tipo-nuevo' ) );
+		} else {
+			campo.setCustomValidity( '' );
+		}
+	} );
+
+	// Con JavaScript, el desplegable manda; sin él queda el campo de texto.
+	prepararTipos();
+
+	Array.prototype.forEach.call(
+		document.querySelectorAll( '.ncm-agregar-tipo' ),
+		function ( boton ) {
+			boton.hidden = false;
+		}
+	);
 } )();

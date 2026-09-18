@@ -131,7 +131,7 @@ class RespuestaAjaxTest extends WP_Ajax_UnitTestCase {
 		$this->assertEqualsWithDelta( 5000800.0, $datos['valor_margen'], 0.000001 );
 		$this->assertCount( 25, $datos['desglose'] );
 		$this->assertStringContainsString( 'Desglose detallado', $datos['html'] );
-		$this->assertStringContainsString( 'ncm-calc__imprimir', $datos['html'] );
+		$this->assertStringNotContainsString( 'ncm-calc__imprimir', $datos['html'] );
 	}
 
 	/**

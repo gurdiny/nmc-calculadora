@@ -393,7 +393,7 @@ class NCM_Admin {
 	private static function render_disenos( $filas ) {
 		$columnas = array(
 			'codigo'       => array( 'Código', 'text' ),
-			'tipo'         => array( 'Tipo de joya', 'text' ),
+			'tipo'         => array( 'Tipo de joya', 'tipos' ),
 			'diseno'       => array( 'Diseño', 'text' ),
 			'peso_metal_g' => array( 'Peso metal (g)', 'number' ),
 			'cant_gemas'   => array( 'Cant. gemas', 'number' ),
@@ -403,7 +403,7 @@ class NCM_Admin {
 			'imagen'       => array( 'Imagen', 'imagen' ),
 		);
 
-		self::render_tabla( 'disenos', $columnas, $filas, 'Cada fila es una combinación de tipo de joya + diseño. Si una combinación no existe aquí, la calculadora responde REVISAR CONFIGURACIÓN.' );
+		self::render_tabla( 'disenos', $columnas, $filas, 'Cada fila es una combinación de tipo de joya + diseño. Un tipo de joya existe mientras al menos un diseño lo use: para estrenar uno, añádelo con «+ Tipo de joya» y asígnaselo a una fila.' );
 	}
 
 	/**
@@ -486,6 +486,18 @@ class NCM_Admin {
 		<p>
 			<button type="button" class="button ncm-agregar-fila"
 				data-coleccion="<?php echo esc_attr( $coleccion ); ?>">Agregar fila</button>
+
+			<?php if ( 'disenos' === $coleccion ) : ?>
+				<button type="button" class="button ncm-agregar-tipo" hidden>+ Tipo de joya</button>
+
+				<span class="ncm-tipo-nuevo" hidden>
+					<input type="text" class="regular-text ncm-tipo-nuevo__campo"
+						placeholder="Nombre del tipo (ej. Collar)" aria-label="Nombre del tipo de joya nuevo">
+					<button type="button" class="button button-primary ncm-tipo-nuevo__confirmar">Añadir</button>
+					<button type="button" class="button-link ncm-tipo-nuevo__cancelar">Cancelar</button>
+				</span>
+			<?php endif; ?>
+
 			<span class="description">El orden de las filas es el orden en que aparecen las opciones en el formulario.</span>
 		</p>
 
@@ -520,6 +532,8 @@ class NCM_Admin {
 							<?php checked( $marcado ); ?>>
 					<?php elseif ( 'imagen' === $col[1] ) : ?>
 						<?php self::campo_imagen( $nombre, (int) $valor ); ?>
+					<?php elseif ( 'tipos' === $col[1] ) : ?>
+						<?php self::campo_tipo( $nombre, $valor ); ?>
 					<?php elseif ( 'number' === $col[1] ) : ?>
 						<input type="number" step="any" class="ncm-input-num"
 							name="<?php echo esc_attr( $nombre ); ?>"
@@ -550,6 +564,41 @@ class NCM_Admin {
 	 * @param string $nombre Nombre del campo del formulario.
 	 * @param int    $id     Id del adjunto actual (0 = ninguno).
 	 */
+	/**
+	 * Campo de tipo de joya: desplegable con los tipos que ya existen.
+	 *
+	 * Los tipos no son una matriz propia: salen de la columna `tipo` de los
+	 * diseños (ver NCM_Data::get_tipos). Por eso el campo que se envía sigue
+	 * siendo el de texto, y el `<select>` es solo un asistente que lo rellena:
+	 * así se evitan las erratas ("Aretes" contra "aretes"), que parten un tipo
+	 * en dos y dejan medio catálogo sin diseños en el front.
+	 *
+	 * Sin JavaScript el desplegable no se muestra y queda el campo de texto de
+	 * siempre, que es lo que de verdad guarda el valor.
+	 *
+	 * @param string $nombre Atributo name del campo.
+	 * @param string $valor  Tipo actual de la fila.
+	 */
+	private static function campo_tipo( $nombre, $valor ) {
+		$tipos = NCM_Data::get_tipos();
+		?>
+		<span class="ncm-tipo" data-ncm-tipo>
+			<select class="ncm-tipo__select" data-ncm-tipo-select aria-label="Tipo de joya" hidden>
+				<option value="">— Elegir tipo —</option>
+				<?php foreach ( $tipos as $tipo ) : ?>
+					<option value="<?php echo esc_attr( $tipo ); ?>" <?php selected( $tipo, $valor ); ?>>
+						<?php echo esc_html( $tipo ); ?>
+					</option>
+				<?php endforeach; ?>
+			</select>
+
+			<input type="text" class="ncm-input-txt ncm-tipo__texto" data-ncm-tipo-texto
+				name="<?php echo esc_attr( $nombre ); ?>"
+				value="<?php echo esc_attr( $valor ); ?>">
+		</span>
+		<?php
+	}
+
 	private static function campo_imagen( $nombre, $id ) {
 		$src = $id ? wp_get_attachment_image_url( $id, 'thumbnail' ) : '';
 

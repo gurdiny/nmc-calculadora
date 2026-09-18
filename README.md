@@ -7,7 +7,7 @@ que NCM tenía en Excel. Tiene **dos modos**:
 | --- | --- | --- |
 | **Quién la ve** | cualquier visitante, sin sesión | solo usuarios con sesión |
 | **Para qué** | captar tráfico e indexarse | cotizar internamente |
-| **Qué muestra** | únicamente `DESDE $X COP` | desglose completo + imprimir/PDF |
+| **Qué muestra** | únicamente `DESDE $X COP` | desglose completo |
 | **Sin sesión** | funciona con normalidad | no se pinta ni el formulario |
 
 El filtrado lo hace el **servidor**, no el navegador: a una petición sin sesión
@@ -134,8 +134,7 @@ tipo de joya elegido. Lo que cambia es la respuesta:
 
 - **Pública:** el precio `DESDE $X COP`, un resumen de lo que el visitante eligió
   y la nota legal. Nada más.
-- **Interna:** además, el código de diseño, el desglose detallado completo y el
-  botón de imprimir/PDF.
+- **Interna:** además, el código de diseño y el desglose detallado completo.
 
 ### Cómo se ve
 
@@ -172,21 +171,6 @@ Así la página tiene algo que indexar aunque el visitante no toque nada.
 Si la combinación de tipo + diseño no existe en la matriz, la salida es
 **REVISAR CONFIGURACIÓN** y no se calcula nada (los administradores ven además
 una línea con el motivo exacto).
-
-### Imprimir / Guardar PDF
-
-El botón **Imprimir / Guardar PDF** abre el diálogo de impresión del navegador.
-La hoja sale con:
-
-- membrete con la marca **NCM**, el rótulo *Cotización interna* y la fecha y hora
-  de generación;
-- la configuración elegida (tipo, diseño, código, origen, gema, talla, metal);
-- el desglose detallado completo;
-- la nota legal.
-
-Todo lo demás de la página —el tema, el menú, el formulario, los botones— queda
-fuera. Para guardar en PDF se elige *Guardar como PDF* en el mismo diálogo del
-navegador: no hay librerías externas ni dependencias, solo `@media print`.
 
 ---
 
@@ -433,7 +417,7 @@ Levanta `mariadb` + `wordpress` en Docker con el plugin montado y comprueba lo
 que no se puede probar sin WP: activación y siembra, los dos casos de aceptación
 dentro de WordPress, el shortcode con y sin sesión, que los assets solo carguen
 donde está el shortcode, el AJAX (válido, sin sesión, nonce inválido,
-`REVISAR_CONFIGURACION`), el membrete de impresión, que un editor no entre al
+`REVISAR_CONFIGURACION`), que un editor no entre al
 panel pero sí pueda cotizar, que reactivar no pise ediciones, y que el log de
 PHP quede limpio. Al terminar desmonta todo.
 

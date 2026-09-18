@@ -908,44 +908,6 @@
 	font-size: 13px;
 }
 
-/* ---------- Membrete (solo al imprimir) ---------- */
-
-.ncm-calc .ncm-solo-print {
-	display: none;
-}
-
-.ncm-calc .ncm-res__membrete {
-	align-items: flex-end;
-	justify-content: space-between;
-	padding-bottom: 10px;
-	margin-bottom: 20px;
-	border-bottom: 2px solid var(--ncm-tinta);
-}
-
-.ncm-calc .ncm-res__marca {
-	font-size: 26pt;
-	font-weight: 700;
-	letter-spacing: 0.22em;
-	line-height: 1;
-}
-
-.ncm-calc .ncm-res__membrete-datos {
-	text-align: right;
-	font-size: 9pt;
-	line-height: 1.5;
-	color: var(--ncm-suave);
-}
-
-.ncm-calc .ncm-res__membrete-titulo {
-	display: block;
-	letter-spacing: 0.12em;
-	text-transform: uppercase;
-}
-
-.ncm-calc .ncm-res__fecha {
-	display: block;
-}
-
 /* ---------- Pantallas pequeñas ---------- */
 
 @media (max-width: 600px) {
@@ -989,63 +951,5 @@
 		animation-duration: 0.01ms !important;
 		animation-iteration-count: 1 !important;
 		transition-duration: 0.01ms !important;
-	}
-}
-
-/* ---------- Impresión / PDF ---------- */
-
-@media print {
-	@page {
-		margin: 16mm;
-	}
-
-	body * {
-		visibility: hidden;
-	}
-
-	.ncm-calc__resultado,
-	.ncm-calc__resultado * {
-		visibility: visible;
-	}
-
-	.ncm-calc__resultado {
-		position: absolute;
-		left: 0;
-		top: 0;
-		width: 100%;
-		margin: 0;
-	}
-
-	.ncm-no-print,
-	.ncm-res__acciones {
-		display: none !important;
-	}
-
-	.ncm-solo-print {
-		display: flex;
-	}
-
-	.ncm-res {
-		margin: 0;
-		padding: 0;
-		border: none;
-		box-shadow: none;
-	}
-
-	.ncm-res__monto {
-		font-size: 28pt;
-	}
-
-	.ncm-res__tabla caption,
-	.ncm-res__seccion th {
-		color: #1f1d1a;
-	}
-
-	.ncm-res__nota {
-		font-size: 8.5pt;
-	}
-
-	.ncm-res__tabla {
-		page-break-inside: avoid;
 	}
 }

@@ -21,6 +21,16 @@ class NCM_Admin {
 	/** Capacidad requerida para configurar. */
 	const CAP = 'manage_options';
 
+	/** Slug de la pantalla del cotizador interno. */
+	const SLUG_COTIZADOR = 'ncm-cotizador';
+
+	/**
+	 * Hook de la pantalla del cotizador, tal como lo devuelve WordPress.
+	 *
+	 * @var string
+	 */
+	private static $hook_cotizador = '';
+
 	/** Avisos de validación acumulados durante un guardado. */
 	private static $avisos = array();
 
@@ -55,6 +65,45 @@ class NCM_Admin {
 			'dashicons-calculator',
 			58
 		);
+
+		/*
+		 * El cotizador interno pide `edit_posts`, no `manage_options`: es la
+		 * misma puerta que el shortcode interno, para que el equipo cotice sin
+		 * darle acceso a la configuración. WordPress enseña el menú padre a
+		 * quien solo alcanza este submenú.
+		 */
+		self::$hook_cotizador = add_submenu_page(
+			self::SLUG,
+			'Cotizador interno',
+			'Cotizador interno',
+			NCM_Shortcode::CAP,
+			self::SLUG_COTIZADOR,
+			array( __CLASS__, 'render_cotizador' )
+		);
+	}
+
+	/**
+	 * Pantalla del cotizador interno: la calculadora con desglose, dentro del
+	 * panel, sin necesidad de publicar una página para el equipo.
+	 */
+	public static function render_cotizador() {
+		if ( ! current_user_can( NCM_Shortcode::CAP ) ) {
+			wp_die( esc_html__( 'No tienes permisos para usar el cotizador.', 'ncm-calculadora' ) );
+		}
+		?>
+		<div class="wrap ncm-cotizador">
+			<h1>Cotizador interno</h1>
+			<p class="description">
+				Cotización con el desglose completo, solo para el equipo. Lo que ve un
+				visitante en la página pública es únicamente el precio.
+			</p>
+
+			<?php
+			// El shortcode ya escapa todo lo que imprime.
+			echo NCM_Shortcode::render_interna(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			?>
+		</div>
+		<?php
 	}
 
 	/**
@@ -63,6 +112,13 @@ class NCM_Admin {
 	 * @param string $hook Hook de la pantalla actual.
 	 */
 	public static function assets( $hook ) {
+		// El cotizador interno usa los assets del front, no los del panel.
+		if ( '' !== self::$hook_cotizador && $hook === self::$hook_cotizador ) {
+			NCM_Shortcode::encolar_en_admin();
+
+			return;
+		}
+
 		if ( 'toplevel_page_' . self::SLUG !== $hook ) {
 			return;
 		}

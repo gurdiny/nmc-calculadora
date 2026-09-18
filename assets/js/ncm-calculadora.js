@@ -218,6 +218,10 @@
 			cuerpo.append( 'action', datos.accion );
 			cuerpo.append( 'nonce', datos.nonce );
 
+			// Desde qué shortcode se pregunta. El servidor lo usa solo para
+			// rebajar: pedir 'interno' sin permisos no da nada extra.
+			cuerpo.append( 'modo', raiz.getAttribute( 'data-ncm-calc' ) || 'publico' );
+
 			campos.forEach( function ( campo ) {
 				cuerpo.append( campo, seleccion[ campo ] );
 			} );

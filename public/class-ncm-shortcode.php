@@ -103,6 +103,18 @@ class NCM_Shortcode {
 	 * los assets, así que si un shortcode se pinta cuando todavía no hay nada
 	 * registrado, el encolado se aplaza hasta `wp_enqueue_scripts`.
 	 */
+	/**
+	 * Encola los assets del front dentro del panel.
+	 *
+	 * El cotizador interno vive en una pantalla del admin, y ahí no corre
+	 * `wp_enqueue_scripts`: los handles no llegan registrados, así que hay que
+	 * registrarlos a mano antes de encolarlos.
+	 */
+	public static function encolar_en_admin() {
+		self::registrar_assets();
+		self::encolar_assets();
+	}
+
 	public static function encolar_assets() {
 		if ( self::$encolado ) {
 			return;
@@ -633,13 +645,25 @@ class NCM_Shortcode {
 	/**
 	 * Calcula y devuelve el resultado que corresponda a quien pregunta.
 	 *
-	 * Con sesión: desglose completo. Sin sesión: solo el precio final.
+	 * Con permisos y preguntando desde la calculadora interna: desglose
+	 * completo. En cualquier otro caso: solo el precio final.
 	 */
 	public static function ajax_calcular() {
 		check_ajax_referer( self::ACCION, 'nonce' );
 
-		// Única fuente de verdad sobre qué se puede devolver.
-		$interno = is_user_logged_in() && current_user_can( self::CAP );
+		/*
+		 * Quién pregunta manda sobre qué se puede devolver; desde dónde
+		 * pregunta, solo sobre qué se devuelve de lo permitido.
+		 *
+		 * El permiso es la única puerta: sin sesión y sin la capacidad no hay
+		 * desglose, pida el modo que pida. El `modo` que manda el front dice
+		 * desde qué shortcode se preguntó, y solo sirve para REBAJAR: así la
+		 * página pública enseña la versión pública también al equipo, que es lo
+		 * que se ve al revisar el sitio con la sesión abierta.
+		 */
+		$puede_interno = is_user_logged_in() && current_user_can( self::CAP );
+		$modo_pedido   = isset( $_POST['modo'] ) ? sanitize_key( wp_unslash( $_POST['modo'] ) ) : self::MODO_PUBLICO;
+		$interno       = $puede_interno && self::MODO_INTERNO === $modo_pedido;
 
 		$seleccion = array();
 
@@ -841,22 +865,25 @@ class NCM_Shortcode {
 				<strong class="ncm-res__monto"><?php echo esc_html( NCM_Calculator::formato_moneda( $r['precio_final'], $r['moneda'] ) ); ?></strong>
 			</div>
 
-			<p class="ncm-res__resumen">
-				<?php
-				echo esc_html(
-					implode(
-						' · ',
-						array(
-							$r['entrada']['tipo'],
-							$r['entrada']['diseno'],
-							$r['entrada']['gema'] . ' ' . strtolower( $r['entrada']['origen'] ),
-							$r['entrada']['talla'],
-							$r['entrada']['metal'],
-						)
-					)
-				);
-				?>
-			</p>
+			<?php
+			/*
+			 * La misma tabla que ve el equipo, menos la fila «Código»: el
+			 * código de diseño es nomenclatura interna y con ella se deduce el
+			 * catálogo. Todo lo demás es lo que el propio visitante eligió, así
+			 * que devolvérselo no filtra nada.
+			 */
+			?>
+			<table class="ncm-res__tabla">
+				<caption>Configuración seleccionada</caption>
+				<tbody>
+					<tr><th scope="row">Tipo de joya</th><td><?php echo esc_html( $r['entrada']['tipo'] ); ?></td></tr>
+					<tr><th scope="row">Diseño</th><td><?php echo esc_html( $r['entrada']['diseno'] ); ?></td></tr>
+					<tr><th scope="row">Origen de la gema</th><td><?php echo esc_html( $r['entrada']['origen'] ); ?></td></tr>
+					<tr><th scope="row">Tipo de gema</th><td><?php echo esc_html( $r['entrada']['gema'] ); ?></td></tr>
+					<tr><th scope="row">Talla</th><td><?php echo esc_html( $r['entrada']['talla'] ); ?></td></tr>
+					<tr><th scope="row">Metal</th><td><?php echo esc_html( $r['entrada']['metal'] ); ?></td></tr>
+				</tbody>
+			</table>
 
 			<?php if ( '' !== $r['texto_nota'] ) : ?>
 				<p class="ncm-res__nota"><?php echo esc_html( $r['texto_nota'] ); ?></p>

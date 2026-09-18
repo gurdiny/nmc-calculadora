@@ -48,12 +48,14 @@ class RespuestaAjaxTest extends WP_Ajax_UnitTestCase {
 	/**
 	 * Lanza la petición AJAX del caso B y devuelve la respuesta decodificada.
 	 *
+	 * @param string $modo Desde qué shortcode se pregunta: 'interno' o 'publico'.
 	 * @return array
 	 */
-	private function pedir_caso_b() {
+	private function pedir_caso_b( $modo = 'interno' ) {
 		$_POST = array(
 			'action' => 'ncm_calcular',
 			'nonce'  => wp_create_nonce( 'ncm_calcular' ),
+			'modo'   => $modo,
 			'tipo'   => 'Anillo',
 			'diseno' => 'Solitario',
 			'origen' => 'Natural',
@@ -195,6 +197,56 @@ class RespuestaAjaxTest extends WP_Ajax_UnitTestCase {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'contributor' ) ) );
 
 		$this->assertSame( 'interno', $this->pedir_caso_b()['data']['modo'] );
+	}
+
+	/**
+	 * El equipo, mirando la página pública, ve lo que ve un visitante.
+	 *
+	 * El permiso manda sobre lo que se PUEDE devolver; el shortcode desde el que
+	 * se pregunta, sobre qué se devuelve de eso. Sin esto, nadie del equipo
+	 * puede revisar su propia página pública sin cerrar sesión.
+	 *
+	 * @dataProvider roles_internos
+	 *
+	 * @param string $rol Rol con acceso interno.
+	 */
+	public function test_desde_la_publica_se_devuelve_lo_publico( $rol ) {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => $rol ) ) );
+
+		// La semilla no trae número de WhatsApp, y sin número no hay botón.
+		$config = NCM_Data::get_config();
+		$config['parametros']['whatsapp_numero'] = '573001234567';
+		$config['parametros']['whatsapp_activo'] = true;
+		NCM_Data::guardar_config( $config );
+		NCM_Data::limpiar_cache();
+
+		$datos = $this->pedir_caso_b( 'publico' )['data'];
+
+		$this->assertSame( 'publico', $datos['modo'] );
+		$this->assertArrayNotHasKey( 'desglose', $datos );
+		$this->assertArrayNotHasKey( 'codigo', $datos );
+		$this->assertStringNotContainsString( 'Desglose detallado', $datos['html'] );
+
+		// Pero la selección del visitante sí, que es lo que se pidió enseñar.
+		$this->assertStringContainsString( 'Configuración seleccionada', $datos['html'] );
+		$this->assertStringContainsString( 'ncm-calc__whatsapp', $datos['html'] );
+	}
+
+	/**
+	 * Y al revés no funciona: el modo solo rebaja, nunca sube.
+	 *
+	 * Es la defensa contra pedir 'interno' a mano desde la consola del
+	 * navegador, que es exactamente lo que intentaría alguien de fuera.
+	 */
+	public function test_pedir_interno_sin_permisos_no_sube_nada() {
+		wp_set_current_user( 0 );
+
+		$datos = $this->pedir_caso_b( 'interno' )['data'];
+
+		$this->assertSame( 'publico', $datos['modo'] );
+		$this->assertArrayNotHasKey( 'desglose', $datos );
+		$this->assertArrayNotHasKey( 'codigo', $datos );
+		$this->assertStringNotContainsString( 'Desglose detallado', $datos['html'] );
 	}
 
 	/** Un nonce inválido corta la petición, con o sin sesión. */

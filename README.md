@@ -3,12 +3,15 @@
 Plugin de WordPress que replica, tal cual, la calculadora de cotización de joyas
 que NCM tenía en Excel. Tiene **dos modos**:
 
-| | `[ncm_calculadora]` | `[ncm_calculadora_interna]` |
+| | `[ncm_calculadora]` | `[ncm_calculadora_interna]` y el panel |
 | --- | --- | --- |
-| **Quién la ve** | cualquier visitante, sin sesión | solo usuarios con sesión |
+| **Quién la ve** | cualquier visitante, sin sesión | solo con `edit_posts` |
 | **Para qué** | captar tráfico e indexarse | cotizar internamente |
-| **Qué muestra** | únicamente `DESDE $X COP` | desglose completo |
-| **Sin sesión** | funciona con normalidad | no se pinta ni el formulario |
+| **Qué muestra** | `DESDE $X COP` y la selección del visitante | desglose completo |
+| **Sin permisos** | funciona con normalidad | no se pinta ni el formulario |
+
+La interna está además en **Calculadora NCM → Cotizador interno**, dentro del
+panel: el equipo cotiza sin necesidad de publicar una página.
 
 El filtrado lo hace el **servidor**, no el navegador: a una petición sin sesión
 nunca se le envían costos, componentes ni margen — ni siquiera dentro del HTML.
@@ -492,9 +495,13 @@ La calculadora pública y la interna comparten un solo endpoint AJAX
 (`ncm_calcular`), registrado tanto para `wp_ajax_` como para `wp_ajax_nopriv_`.
 **Quién pregunta decide qué se responde, y esa decisión es del servidor.**
 
-- `NCM_Shortcode::respuesta()` arma la carga a partir de `is_user_logged_in()`.
-  La versión pública es una *allowlist*: precio final, la selección que el propio
-  visitante hizo, moneda y nota legal.
+- El permiso es la única puerta: `is_user_logged_in()` más la capacidad
+  `edit_posts`. El `modo` que manda el front dice desde qué shortcode se
+  preguntó y **solo puede rebajar**, así que la página pública responde en
+  público también al equipo, y pedir `interno` sin permisos no sube nada.
+- `NCM_Shortcode::respuesta()` arma la carga. La versión pública es una
+  *allowlist*: precio final, la selección que el propio visitante hizo, moneda y
+  nota legal.
 - Lo que **nunca** sale hacia un anónimo: componentes de gema y metal, mano de
   obra, extras, costo de producción, margen (ni su valor), precio antes de
   redondear, código de diseño, desglose y el motivo técnico de un
@@ -508,8 +515,9 @@ La calculadora pública y la interna comparten un solo endpoint AJAX
 
 ### Quién puede ver costos y margen
 
-La vista interna (`[ncm_calculadora_interna]`) muestra el **costo de producción y
-el margen comercial**, así que está detrás de la capacidad **`edit_posts`**:
+La vista interna (`[ncm_calculadora_interna]` y la pantalla **Cotizador
+interno** del panel) muestra el **costo de producción y el margen comercial**,
+así que está detrás de la capacidad **`edit_posts`**:
 autores, editores y administradores. Un **suscriptor no la ve** — ni el
 formulario, ni el desglose por AJAX: recibe exactamente lo mismo que un anónimo,
 solo el precio.
@@ -541,8 +549,9 @@ Si en tu instalación quien cotiza tiene otro rol, cambia la constante
 
 Además:
 
-- El shortcode interno exige `is_user_logged_in()` y la capacidad `edit_posts`;
-  a un anónimo —o a un suscriptor— no le pinta ni el formulario.
+- El shortcode interno y la pantalla del panel exigen `is_user_logged_in()` y la
+  capacidad `edit_posts`; a un anónimo —o a un suscriptor— no le pintan ni el
+  formulario.
 - **Nonce en las dos rutas**, con y sin sesión.
 - El panel exige `manage_options`, con nonce en el guardado y en la restauración.
 - Toda entrada pasa por `sanitize_*` y toda salida por `esc_*`.

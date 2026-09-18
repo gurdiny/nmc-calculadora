@@ -337,7 +337,21 @@ $fuente = file_get_contents( __DIR__ . '/../public/class-ncm-shortcode.php' );
 ncm_check( 'registra wp_ajax', true, false !== strpos( $fuente, "'wp_ajax_' . self::ACCION" ) );
 ncm_check( 'registra wp_ajax_nopriv', true, false !== strpos( $fuente, "'wp_ajax_nopriv_' . self::ACCION" ) );
 ncm_check( 'verifica el nonce siempre', true, false !== strpos( $fuente, 'check_ajax_referer( self::ACCION' ) );
-ncm_check( 'el permiso sale de is_user_logged_in', true, false !== strpos( $fuente, '$interno = is_user_logged_in()' ) );
+/*
+ * El permiso es la única puerta y el modo pedido solo puede rebajar. Si alguien
+ * invierte el orden —dar por bueno el modo del front y comprobar después— un
+ * anónimo podría pedir 'interno' y llevarse el desglose.
+ */
+ncm_check(
+	'el permiso sigue saliendo de la sesión',
+	true,
+	false !== strpos( $fuente, '$puede_interno = is_user_logged_in() && current_user_can( self::CAP )' )
+);
+ncm_check(
+	'y el modo pedido solo rebaja',
+	true,
+	false !== strpos( $fuente, '$interno       = $puede_interno && self::MODO_INTERNO === $modo_pedido' )
+);
 
 echo "\n----------------------------------------\n";
 

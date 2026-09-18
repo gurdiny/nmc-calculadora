@@ -93,24 +93,67 @@ class NCM_Calculator {
 			return $this->error( $entrada, 'diseno_no_encontrado', 'La combinación de tipo de joya y diseño no existe en la matriz.' );
 		}
 
-		$gema = $this->buscar( 'gemas', array( 'tipo_gema' => $entrada['gema'] ) );
+		/*
+		 * Una pieza sin gemas (cant_gemas = 0) no tiene origen, ni tipo de gema,
+		 * ni talla que valgan: la esclava y el bangle son metal y nada más. No
+		 * se piden y no se cobran.
+		 *
+		 * Ojo con la talla en particular: su ajuste se suma dentro del
+		 * componente gema, así que sin esta condición una pieza de cero gemas
+		 * pagaba por tallar una piedra que no existe en cuanto alguien
+		 * configurara un ajuste distinto de cero desde el panel.
+		 */
+		$lleva_gemas = (float) $fila_diseno['cant_gemas'] > 0;
 
-		if ( null === $gema ) {
-			return $this->error( $entrada, 'gema_no_encontrada', 'El tipo de gema no existe en la matriz.', $fila_diseno['codigo'] );
-		}
+		$gema  = null;
+		$talla = null;
 
-		if ( ! in_array( $entrada['origen'], $this->config['origenes'], true ) ) {
-			return $this->error( $entrada, 'origen_invalido', 'El origen de la gema no es válido.', $fila_diseno['codigo'] );
-		}
+		if ( $lleva_gemas ) {
+			$gema = $this->buscar( 'gemas', array( 'tipo_gema' => $entrada['gema'] ) );
 
-		$talla = $this->buscar( 'tallas', array( 'talla' => $entrada['talla'] ) );
+			if ( null === $gema ) {
+				return $this->error(
+					$entrada,
+					'gema_no_encontrada',
+					'' === $entrada['gema']
+						? 'Falta el tipo de gema, y este diseño sí lleva.'
+						: 'El tipo de gema no existe en la matriz.',
+					$fila_diseno['codigo']
+				);
+			}
 
-		if ( null === $talla ) {
-			return $this->error( $entrada, 'talla_no_encontrada', 'La talla no existe en la matriz.', $fila_diseno['codigo'] );
-		}
+			if ( ! in_array( $entrada['origen'], $this->config['origenes'], true ) ) {
+				return $this->error(
+					$entrada,
+					'origen_invalido',
+					'' === $entrada['origen']
+						? 'Falta el origen de la gema, y este diseño sí lleva.'
+						: 'El origen de la gema no es válido.',
+					$fila_diseno['codigo']
+				);
+			}
 
-		if ( empty( $talla['disponible'] ) ) {
-			return $this->error( $entrada, 'talla_no_disponible', 'La talla seleccionada no está disponible.', $fila_diseno['codigo'] );
+			$talla = $this->buscar( 'tallas', array( 'talla' => $entrada['talla'] ) );
+
+			if ( null === $talla ) {
+				return $this->error(
+					$entrada,
+					'talla_no_encontrada',
+					'' === $entrada['talla']
+						? 'Falta la talla, y este diseño sí lleva gemas.'
+						: 'La talla no existe en la matriz.',
+					$fila_diseno['codigo']
+				);
+			}
+
+			if ( empty( $talla['disponible'] ) ) {
+				return $this->error( $entrada, 'talla_no_disponible', 'La talla seleccionada no está disponible.', $fila_diseno['codigo'] );
+			}
+		} else {
+			// Lo que venga en esos tres campos se descarta: no aplica a la pieza.
+			$entrada['origen'] = '';
+			$entrada['gema']   = '';
+			$entrada['talla']  = '';
 		}
 
 		$metal = $this->buscar( 'metales', array( 'metal' => $entrada['metal'] ) );
@@ -130,14 +173,22 @@ class NCM_Calculator {
 		$mano_obra   = (float) $fila_diseno['mano_obra'];
 		$extras      = (float) $fila_diseno['extras'];
 
-		// 3. Componente gema.
-		$precio_ct    = 'Laboratorio' === $entrada['origen']
-			? (float) $gema['precio_laboratorio']
-			: (float) $gema['precio_natural'];
-		$ajuste_talla   = (float) $talla['ajuste'];
-		$ct_total       = $cant_gemas * $ct_por_gema;
-		$subtotal_gemas = $precio_ct * $cant_gemas * $ct_por_gema;
-		$comp_gema      = $subtotal_gemas + $ajuste_talla;
+		// 3. Componente gema. Sin gemas no hay nada que sumar, ni el ajuste de talla.
+		$precio_ct      = 0.0;
+		$ajuste_talla   = 0.0;
+		$ct_total       = 0.0;
+		$subtotal_gemas = 0.0;
+
+		if ( $lleva_gemas ) {
+			$precio_ct      = 'Laboratorio' === $entrada['origen']
+				? (float) $gema['precio_laboratorio']
+				: (float) $gema['precio_natural'];
+			$ajuste_talla   = (float) $talla['ajuste'];
+			$ct_total       = $cant_gemas * $ct_por_gema;
+			$subtotal_gemas = $precio_ct * $cant_gemas * $ct_por_gema;
+		}
+
+		$comp_gema = $subtotal_gemas + $ajuste_talla;
 
 		// 4. Componente metal.
 		$factor_merma      = (float) $parametros['factor_merma_metal'];
@@ -165,6 +216,14 @@ class NCM_Calculator {
 			'error'   => '',
 			'codigo'  => $fila_diseno['codigo'],
 			'entrada' => $entrada,
+
+			/*
+			 * Si la pieza lleva gemas. Lo decide el catálogo, no quien pregunta,
+			 * y de aquí salen tanto los pasos que se piden en el formulario como
+			 * las filas que se pintan en el resultado y en el mensaje de
+			 * WhatsApp: sin gemas no se menciona ni origen, ni gema, ni talla.
+			 */
+			'lleva_gemas' => $lleva_gemas,
 
 			// Bloque de gema, en el orden del desglose del Excel.
 			'gema'    => array(
@@ -330,7 +389,9 @@ class NCM_Calculator {
 		$g      = $r['gema'];
 		$m      = $r['metal'];
 
-		$filas = array(
+		// Sin gemas no hay sección de gema: sería una columna de ceros y una
+		// «Ajuste por talla ()» sin talla.
+		$filas_gema = empty( $r['lleva_gemas'] ) ? array() : array(
 			array( 'tipo' => 'seccion', 'etiqueta' => 'Gema' ),
 			array( 'tipo' => 'dato', 'etiqueta' => 'Tipo de gema', 'valor' => $g['tipo_gema'] ),
 			array( 'tipo' => 'dato', 'etiqueta' => 'Origen', 'valor' => $g['origen'] ),
@@ -360,7 +421,9 @@ class NCM_Calculator {
 				'valor'    => self::formato_moneda( $g['ajuste_talla'] ),
 			),
 			array( 'tipo' => 'total', 'etiqueta' => 'Componente gema', 'valor' => self::formato_moneda( $g['subtotal'] ) ),
+		);
 
+		$filas = array(
 			array( 'tipo' => 'seccion', 'etiqueta' => 'Metal' ),
 			array( 'tipo' => 'dato', 'etiqueta' => 'Metal', 'valor' => $m['metal'] ),
 			array( 'tipo' => 'dato', 'etiqueta' => 'Peso base', 'valor' => self::formato_numero( $m['peso_base'], 4 ) . ' g' ),
@@ -403,7 +466,7 @@ class NCM_Calculator {
 			),
 		);
 
-		return $filas;
+		return array_merge( $filas_gema, $filas );
 	}
 
 	/* ---------------------------------------------------------------------

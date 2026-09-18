@@ -330,6 +330,37 @@ foreach ( NCM_Data::semilla()['disenos'] as $diseno ) {
 
 ncm_check( '30 combinaciones sin filtraciones', array(), $filtraciones );
 
+echo "\n== Pieza sin gemas: tampoco se mencionan ==\n";
+
+$esclava = $calc->calcular(
+	array( 'tipo' => 'Pulsera', 'diseno' => 'Esclava', 'origen' => '', 'gema' => '', 'talla' => '', 'metal' => 'Oro blanco' )
+);
+
+$esc_publica = NCM_Shortcode::respuesta( $esclava, false );
+$esc_interna = NCM_Shortcode::respuesta( $esclava, true );
+
+foreach ( array( 'Origen de la gema', 'Tipo de gema', 'Talla' ) as $fila ) {
+	ncm_check( "la tabla pública no trae «{$fila}»", false, false !== strpos( $esc_publica['html'], '>' . $fila . '<' ) );
+	ncm_check( "ni la interna", false, false !== strpos( $esc_interna['html'], '>' . $fila . '<' ) );
+}
+
+ncm_check( 'la interna lo dice explícitamente', true, false !== strpos( $esc_interna['html'], 'Esta pieza no lleva' ) );
+ncm_check( 'y el desglose no abre sección de gema', false, false !== strpos( $esc_interna['html'], '>Gema<' ) );
+
+// El mensaje de WhatsApp pierde las líneas de gema, no las deja a medias.
+$wa_cfg = NCM_Data::semilla_cruda();
+$wa_cfg['parametros']['whatsapp_numero'] = '573001234567';
+NCM_Data::guardar_config( $wa_cfg );
+NCM_Data::limpiar_cache();
+
+$wa_esclava = NCM_Shortcode::whatsapp( $esclava );
+
+ncm_check( 'WhatsApp no menciona la gema', false, false !== strpos( $wa_esclava['mensaje'], 'Gema:' ) );
+ncm_check( 'ni la talla', false, false !== strpos( $wa_esclava['mensaje'], 'Talla:' ) );
+ncm_check( 'pero sí el metal', true, false !== strpos( $wa_esclava['mensaje'], 'Metal: Oro blanco' ) );
+ncm_check( 'y el precio', true, false !== strpos( $wa_esclava['mensaje'], '$17.380.000' ) );
+ncm_check( 'sin paréntesis huérfanos', false, false !== strpos( $wa_esclava['mensaje'], '()' ) );
+
 echo "\n== El handler AJAX decide en el servidor ==\n";
 
 $fuente = file_get_contents( __DIR__ . '/../public/class-ncm-shortcode.php' );

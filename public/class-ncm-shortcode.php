@@ -247,8 +247,8 @@ class NCM_Shortcode {
 				'seleccione' => '— Selecciona —',
 				'calculando' => 'Calculando…',
 				'calcular'   => 'Calcular precio',
-				'incompleto'   => 'Completa las seis opciones para calcular.',
-				'resumenVacio' => 'Elige las seis opciones para ver el precio.',
+				'incompleto'   => 'Completa todas las opciones para calcular.',
+				'resumenVacio' => 'Elige todas las opciones para ver el precio.',
 				'editar'       => 'Cambiar',
 				'errorRed'   => 'No se pudo calcular. Recarga la página e inténtalo de nuevo.',
 			),
@@ -335,9 +335,14 @@ class NCM_Shortcode {
 					?>
 				</div>
 
+				<?php // Se enseña cuando el diseño elegido no lleva gemas. ?>
+				<p class="ncm-calc__nota-sin-gemas" data-sin-gemas hidden>
+					Esta pieza es solo metal: no hay que elegir origen, gema ni talla.
+				</p>
+
 				<div class="ncm-calc__barra" data-barra>
 					<div class="ncm-calc__resumen" data-resumen>
-						<span class="ncm-calc__resumen-vacio">Elige las seis opciones para ver el precio.</span>
+						<span class="ncm-calc__resumen-vacio">Elige todas las opciones para ver el precio.</span>
 					</div>
 
 					<div class="ncm-calc__acciones">
@@ -392,7 +397,11 @@ class NCM_Shortcode {
 			$opciones[] = array(
 				'valor'  => $diseno['diseno'],
 				'imagen' => $diseno['imagen'],
-				'datos'  => array( 'tipo' => $diseno['tipo'] ),
+				'datos'  => array(
+					'tipo' => $diseno['tipo'],
+					// El front esconde origen, gema y talla cuando vale "0".
+					'gemas' => (float) $diseno['cant_gemas'] > 0 ? '1' : '0',
+				),
 				'oculto' => true,
 			);
 		}
@@ -671,9 +680,17 @@ class NCM_Shortcode {
 			$seleccion[ $campo ] = isset( $_POST[ $campo ] )
 				? sanitize_text_field( wp_unslash( $_POST[ $campo ] ) )
 				: '';
+		}
 
+		/*
+		 * Origen, gema y talla no se exigen aquí: hay diseños sin gemas
+		 * (cant_gemas = 0) que no los tienen. Quien sabe si hacen falta es el
+		 * motor, que conoce el catálogo; si faltan en un diseño que sí lleva,
+		 * responde REVISAR CONFIGURACIÓN con el motivo.
+		 */
+		foreach ( array( 'tipo', 'diseno', 'metal' ) as $campo ) {
 			if ( '' === $seleccion[ $campo ] ) {
-				wp_send_json_error( array( 'mensaje' => 'Completa las seis opciones para calcular.' ), 400 );
+				wp_send_json_error( array( 'mensaje' => 'Completa todas las opciones para calcular.' ), 400 );
 			}
 		}
 
@@ -794,6 +811,26 @@ class NCM_Shortcode {
 			? $p['whatsapp_mensaje']
 			: "Hola, quiero cotizar esta pieza:\n\n{tipo} · {diseno}\nGema: {gema} ({origen})\nTalla: {talla}\nMetal: {metal}\n\nPrecio estimado: {precio}";
 
+		/*
+		 * Si la pieza no lleva gemas, se caen las líneas de la plantilla que
+		 * hablan de ellas. Sustituir por vacío dejaría un «Gema:  ()» y un
+		 * «Talla:» sueltos, que es peor que no decir nada. Se quita la línea
+		 * entera porque la plantilla la escribe el equipo y no hay forma de
+		 * saber qué texto acompaña al marcador.
+		 */
+		if ( empty( $r['lleva_gemas'] ) ) {
+			$lineas = preg_split( '/\R/', $plantilla );
+			$quedan = array();
+
+			foreach ( $lineas as $linea ) {
+				if ( ! preg_match( '/\{(gema|origen|talla)\}/', $linea ) ) {
+					$quedan[] = $linea;
+				}
+			}
+
+			$plantilla = implode( "\n", $quedan );
+		}
+
 		$mensaje = strtr(
 			$plantilla,
 			array(
@@ -878,9 +915,11 @@ class NCM_Shortcode {
 				<tbody>
 					<tr><th scope="row">Tipo de joya</th><td><?php echo esc_html( $r['entrada']['tipo'] ); ?></td></tr>
 					<tr><th scope="row">Diseño</th><td><?php echo esc_html( $r['entrada']['diseno'] ); ?></td></tr>
-					<tr><th scope="row">Origen de la gema</th><td><?php echo esc_html( $r['entrada']['origen'] ); ?></td></tr>
-					<tr><th scope="row">Tipo de gema</th><td><?php echo esc_html( $r['entrada']['gema'] ); ?></td></tr>
-					<tr><th scope="row">Talla</th><td><?php echo esc_html( $r['entrada']['talla'] ); ?></td></tr>
+					<?php if ( ! empty( $r['lleva_gemas'] ) ) : ?>
+						<tr><th scope="row">Origen de la gema</th><td><?php echo esc_html( $r['entrada']['origen'] ); ?></td></tr>
+						<tr><th scope="row">Tipo de gema</th><td><?php echo esc_html( $r['entrada']['gema'] ); ?></td></tr>
+						<tr><th scope="row">Talla</th><td><?php echo esc_html( $r['entrada']['talla'] ); ?></td></tr>
+					<?php endif; ?>
 					<tr><th scope="row">Metal</th><td><?php echo esc_html( $r['entrada']['metal'] ); ?></td></tr>
 				</tbody>
 			</table>
@@ -922,9 +961,13 @@ class NCM_Shortcode {
 					<tr><th scope="row">Tipo de joya</th><td><?php echo esc_html( $r['entrada']['tipo'] ); ?></td></tr>
 					<tr><th scope="row">Diseño</th><td><?php echo esc_html( $r['entrada']['diseno'] ); ?></td></tr>
 					<tr><th scope="row">Código</th><td><?php echo esc_html( $r['codigo'] ); ?></td></tr>
-					<tr><th scope="row">Origen de la gema</th><td><?php echo esc_html( $r['entrada']['origen'] ); ?></td></tr>
-					<tr><th scope="row">Tipo de gema</th><td><?php echo esc_html( $r['entrada']['gema'] ); ?></td></tr>
-					<tr><th scope="row">Talla</th><td><?php echo esc_html( $r['entrada']['talla'] ); ?></td></tr>
+					<?php if ( empty( $r['lleva_gemas'] ) ) : ?>
+						<tr><th scope="row">Gemas</th><td>Esta pieza no lleva</td></tr>
+					<?php else : ?>
+						<tr><th scope="row">Origen de la gema</th><td><?php echo esc_html( $r['entrada']['origen'] ); ?></td></tr>
+						<tr><th scope="row">Tipo de gema</th><td><?php echo esc_html( $r['entrada']['gema'] ); ?></td></tr>
+						<tr><th scope="row">Talla</th><td><?php echo esc_html( $r['entrada']['talla'] ); ?></td></tr>
+					<?php endif; ?>
 					<tr><th scope="row">Metal</th><td><?php echo esc_html( $r['entrada']['metal'] ); ?></td></tr>
 				</tbody>
 			</table>

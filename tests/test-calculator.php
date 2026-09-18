@@ -416,6 +416,63 @@ $h       = $calc_wp->calcular(
 
 ncm_check( 'caso A desde la config guardada', 14480000.0, $h['precio_final'] );
 
+echo "\n== Piezas sin gemas: no se piden, no se cobran ==\n";
+
+/*
+ * cant_gemas = 0 significa que la pieza es solo metal. Origen, gema y talla no
+ * aplican: ni se exigen ni pueden mover el precio. Ojo con la talla, que es la
+ * trampa: su ajuste se suma dentro del componente gema, así que sin esta regla
+ * una esclava pagaba por tallar una piedra que no existe.
+ */
+$sin_gemas = $calc->calcular(
+	array( 'tipo' => 'Pulsera', 'diseno' => 'Esclava', 'origen' => '', 'gema' => '', 'talla' => '', 'metal' => 'Oro blanco' )
+);
+
+ncm_check( 'la esclava calcula sin gema ni talla', true, $sin_gemas['ok'] );
+ncm_check( 'y se marca como pieza sin gemas', false, $sin_gemas['lleva_gemas'] );
+ncm_check( 'el componente gema es cero', 0.0, $sin_gemas['gema']['subtotal'] );
+ncm_check( 'el desglose no trae sección de gema', false, in_array( 'Gema', array_column( NCM_Calculator::desglose( $sin_gemas ), 'etiqueta' ), true ) );
+
+// Mandar gema y talla no cambia nada: el motor las descarta.
+$con_ruido = $calc->calcular(
+	array( 'tipo' => 'Pulsera', 'diseno' => 'Esclava', 'origen' => 'Natural', 'gema' => 'Diamante', 'talla' => 'Marquesa', 'metal' => 'Oro blanco' )
+);
+
+ncm_check( 'mandar gema no altera el precio', $sin_gemas['precio_final'], $con_ruido['precio_final'] );
+ncm_check( 'y la entrada queda limpia', '', $con_ruido['entrada']['gema'] );
+ncm_check( 'la talla también', '', $con_ruido['entrada']['talla'] );
+
+// El ajuste de talla, que era el bug de verdad.
+$config_ajuste = NCM_Data::semilla();
+
+foreach ( $config_ajuste['tallas'] as $i => $fila ) {
+	if ( 'Marquesa' === $fila['talla'] ) {
+		$config_ajuste['tallas'][ $i ]['ajuste'] = 300000;
+	}
+}
+
+$calc_ajuste = new NCM_Calculator( $config_ajuste );
+
+ncm_check(
+	'una talla con ajuste no encarece una pieza sin gemas',
+	$calc_ajuste->calcular( array( 'tipo' => 'Pulsera', 'diseno' => 'Bangle (Rígida)', 'origen' => '', 'gema' => '', 'talla' => '', 'metal' => 'Oro blanco' ) )['precio_final'],
+	$calc_ajuste->calcular( array( 'tipo' => 'Pulsera', 'diseno' => 'Bangle (Rígida)', 'origen' => 'Natural', 'gema' => 'Diamante', 'talla' => 'Marquesa', 'metal' => 'Oro blanco' ) )['precio_final']
+);
+
+// Pero en una que sí lleva, el ajuste tiene que seguir aplicándose.
+$tennis_redonda  = $calc_ajuste->calcular( array( 'tipo' => 'Pulsera', 'diseno' => 'Tennis', 'origen' => 'Natural', 'gema' => 'Zafiro', 'talla' => 'Redonda', 'metal' => 'Oro blanco' ) );
+$tennis_marquesa = $calc_ajuste->calcular( array( 'tipo' => 'Pulsera', 'diseno' => 'Tennis', 'origen' => 'Natural', 'gema' => 'Zafiro', 'talla' => 'Marquesa', 'metal' => 'Oro blanco' ) );
+
+ncm_check( 'y en una que sí lleva, sigue aplicándose', true, $tennis_marquesa['precio_final'] > $tennis_redonda['precio_final'] );
+
+// Al revés: si el diseño lleva gemas, no se puede omitir la gema.
+$falta = $calc->calcular(
+	array( 'tipo' => 'Anillo', 'diseno' => 'Solitario', 'origen' => '', 'gema' => '', 'talla' => '', 'metal' => 'Oro blanco' )
+);
+
+ncm_check( 'un diseño con gemas sigue exigiéndolas', false, $falta['ok'] );
+ncm_check( 'y dice por qué', 'gema_no_encontrada', $falta['error_codigo'] );
+
 echo "\n----------------------------------------\n";
 
 if ( $fallos > 0 ) {

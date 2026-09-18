@@ -14,6 +14,9 @@
 	var textos = datos.textos || {};
 	var campos = [ 'tipo', 'diseno', 'origen', 'gema', 'talla', 'metal' ];
 
+	// Pasos que solo tienen sentido si la pieza lleva gemas.
+	var camposGema = [ 'origen', 'gema', 'talla' ];
+
 	/**
 	 * Prepara una instancia de la calculadora.
 	 *
@@ -112,11 +115,104 @@
 			}
 		}
 
+		/**
+		 * Si el diseño elegido lleva gemas.
+		 *
+		 * El dato viene del catálogo, en el data-gemas que el servidor pone en
+		 * cada opción de diseño. Mientras no haya diseño elegido se responde que
+		 * sí: no hay nada que esconder todavía.
+		 *
+		 * @return {boolean} Si la pieza lleva gemas.
+		 */
+		function llevaGemas() {
+			var marcado = raiz.querySelector( '[data-campo="diseno"]:checked' );
+
+			if ( ! marcado ) {
+				return true;
+			}
+
+			var opcion = marcado.closest( '.ncm-opcion' );
+
+			return ! opcion || opcion.getAttribute( 'data-gemas' ) !== '0';
+		}
+
+		/**
+		 * Campos que hay que pedir para el diseño elegido.
+		 *
+		 * @return {Array} Nombres de campo.
+		 */
+		function camposActivos() {
+			if ( llevaGemas() ) {
+				return campos;
+			}
+
+			return campos.filter( function ( campo ) {
+				return camposGema.indexOf( campo ) === -1;
+			} );
+		}
+
+		/**
+		 * Esconde o devuelve los pasos de gema según el diseño.
+		 *
+		 * Al esconderlos se borra lo que hubiera elegido: si alguien eligió
+		 * Tennis con esmeralda y luego se pasa a Esclava, esa esmeralda no puede
+		 * quedarse marcada por detrás. El servidor la descartaría igual, pero el
+		 * resumen y los chips mentirían.
+		 */
+		function aplicarGemas() {
+			var conGemas = llevaGemas();
+
+			camposGema.forEach( function ( campo ) {
+				var seccion = paso( campo );
+
+				if ( ! seccion ) {
+					return;
+				}
+
+				seccion.hidden = ! conGemas;
+
+				if ( conGemas ) {
+					return;
+				}
+
+				Array.prototype.forEach.call(
+					seccion.querySelectorAll( '.ncm-opcion__radio' ),
+					function ( radio ) {
+						radio.checked = false;
+					}
+				);
+			} );
+
+			var nota = raiz.querySelector( '[data-sin-gemas]' );
+
+			if ( nota ) {
+				nota.hidden = conGemas;
+			}
+
+			// Los números de los pasos se recalculan: con una esclava son 1, 2 y 3.
+			var visible = 0;
+
+			Array.prototype.forEach.call( pasos, function ( seccion ) {
+				if ( seccion.hidden ) {
+					return;
+				}
+
+				visible++;
+
+				var numero = seccion.querySelector( '.ncm-paso__numero' );
+
+				if ( numero ) {
+					numero.textContent = String( visible );
+				}
+			} );
+		}
+
 		/** Refresca la etiqueta de cada paso, el resumen y la barra. */
 		function pintarEstado() {
+			var activos = camposActivos();
 			var elegidos = 0;
 
-			campos.forEach( function ( campo ) {
+			activos.forEach( function ( campo ) {
 				var seccion = paso( campo );
 				var elegido = valor( campo );
 
@@ -138,7 +234,7 @@
 			} );
 
 			if ( barraProgreso ) {
-				barraProgreso.style.width = ( elegidos / campos.length * 100 ) + '%';
+				barraProgreso.style.width = ( elegidos / activos.length * 100 ) + '%';
 			}
 
 			if ( resumen ) {
@@ -149,7 +245,7 @@
 				} else {
 					resumen.innerHTML = '';
 
-					campos.forEach( function ( campo ) {
+					activos.forEach( function ( campo ) {
 						var elegido = valor( campo );
 
 						if ( ! elegido ) {
@@ -171,9 +267,9 @@
 				limpiar.hidden = elegidos === 0;
 			}
 
-			boton.disabled = elegidos < campos.length;
+			boton.disabled = elegidos < activos.length;
 
-			return elegidos === campos.length;
+			return elegidos === activos.length;
 		}
 
 		/**
@@ -193,9 +289,10 @@
 		/** Pide el cálculo al servidor y pinta lo que devuelva. */
 		function calcular() {
 			var seleccion = {};
+			var activos = camposActivos();
 			var completa = true;
 
-			campos.forEach( function ( campo ) {
+			activos.forEach( function ( campo ) {
 				seleccion[ campo ] = valor( campo );
 
 				if ( ! seleccion[ campo ] ) {
@@ -222,7 +319,7 @@
 			// rebajar: pedir 'interno' sin permisos no da nada extra.
 			cuerpo.append( 'modo', raiz.getAttribute( 'data-ncm-calc' ) || 'publico' );
 
-			campos.forEach( function ( campo ) {
+			activos.forEach( function ( campo ) {
 				cuerpo.append( campo, seleccion[ campo ] );
 			} );
 
@@ -281,6 +378,7 @@
 			} );
 
 			filtrarDisenos();
+			aplicarGemas();
 			pintarEstado();
 			resultado.innerHTML = '';
 			mostrarAviso( '' );
@@ -301,8 +399,15 @@
 				filtrarDisenos();
 			}
 
+			// El diseño decide si la pieza lleva gemas, así que puede cambiar
+			// cuántos pasos quedan por delante.
+			if ( 'tipo' === campo || 'diseno' === campo ) {
+				aplicarGemas();
+			}
+
 			var completa = pintarEstado();
-			var siguiente = campos[ campos.indexOf( campo ) + 1 ];
+			var activos = camposActivos();
+			var siguiente = activos[ activos.indexOf( campo ) + 1 ];
 
 			if ( siguiente && ! valor( siguiente ) ) {
 				abrir( siguiente );
@@ -352,6 +457,7 @@
 
 		raiz.classList.add( 'ncm-calc--con-js' );
 		filtrarDisenos();
+		aplicarGemas();
 		pintarEstado();
 	}
 

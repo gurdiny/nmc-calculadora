@@ -953,3 +953,20 @@
 		transition-duration: 0.01ms !important;
 	}
 }
+
+/* ---------- Pieza sin gemas ---------- */
+
+/*
+ * Cuando el diseño elegido no lleva gemas, el front esconde los pasos de
+ * origen, gema y talla, y en su lugar se explica por qué: si no, parece que el
+ * formulario se quedó a medias.
+ */
+.ncm-calc .ncm-calc__nota-sin-gemas {
+	margin: 14px 0 0;
+	padding: 12px 16px;
+	border: 1px dashed var(--ncm-linea-fuerte);
+	border-radius: var(--ncm-radio-chico);
+	background: var(--ncm-fondo-alt);
+	color: var(--ncm-suave);
+	font-size: 14px;
+}

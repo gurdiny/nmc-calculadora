@@ -139,6 +139,19 @@ tipo de joya elegido. Lo que cambia es la respuesta:
   y la nota legal. Nada más.
 - **Interna:** además, el código de diseño y el desglose detallado completo.
 
+### Piezas sin gemas
+
+Dos diseños del catálogo son solo metal: **Esclava** (`PU-ESC`) y **Bangle
+(Rígida)** (`PU-BAN`), ambos con `cant_gemas = 0`. Al elegirlos, el recorrido
+pasa de seis pasos a tres —tipo, diseño y metal— y se explica por qué; lo que ya
+estuviera elegido en origen, gema o talla se descarta.
+
+No es solo cosmética: el ajuste de talla se suma **dentro** del componente gema,
+así que si no se cortara la regla en el motor, una esclava pagaría por tallar
+una piedra que no tiene en cuanto alguien configurase un ajuste distinto de cero
+desde el panel. Quien decide es `NCM_Calculator` (`lleva_gemas` en el
+resultado); el formulario solo lo refleja.
+
 ### Cómo se ve
 
 El formulario es un recorrido de seis pasos, no una lista de desplegables:
